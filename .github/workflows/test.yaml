@@ -17,5 +17,5 @@ jobs:
         run: go build ./cmd/eib
       - name: Run tests
         run: |
-        go test -v ./pkg/build/
-        go test -v ./pkg/config/
+          go test -v ./pkg/build/
+          go test -v ./pkg/config/
