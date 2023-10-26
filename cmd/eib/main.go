@@ -43,7 +43,7 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 		return nil, nil, fmt.Errorf("parsing image config file %s: %w", configFile, err)
 	}
 
-	err = validateImageConfigDir(configDir)
+	err = validateImageConfigDirAndBaseImage(configDir, *imageConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
@@ -97,7 +97,7 @@ func parseImageConfig(configFile string) (*config.ImageConfig, error) {
 	return imageConfig, nil
 }
 
-func validateImageConfigDir(configDir string) error {
+func validateImageConfigDirAndBaseImage(configDir string, imageConfig config.ImageConfig) error {
 	if configDir == "" {
 		return fmt.Errorf("-%s must be specified", argConfigDir)
 	}
@@ -105,6 +105,11 @@ func validateImageConfigDir(configDir string) error {
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		return err
 	}
+
+	if _, err := os.Stat(configDir + "/images/"+  imageConfig.Image.BaseImage); os.IsNotExist(err) {
+		return err
+	}
+	
 	return nil
 }
 
