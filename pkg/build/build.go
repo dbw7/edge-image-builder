@@ -34,6 +34,15 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("configuring the welcome message: %w", err)
 	}
 
+	err = b.writeElementalScript()
+	if err != nil {
+		return fmt.Errorf("configuring the elemental script: %w", err)
+	}
+
+	err = b.writeElementalConfig()
+	if err != nil {
+		return fmt.Errorf("configuring the elemental config: %w", err)
+	}
 	err = b.configureScripts()
 	if err != nil {
 		return fmt.Errorf("configuring custom scripts: %w", err)

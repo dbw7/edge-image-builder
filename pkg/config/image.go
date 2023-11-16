@@ -14,6 +14,7 @@ const (
 type ImageConfig struct {
 	APIVersion      string          `yaml:"apiVersion"`
 	Image           Image           `yaml:"image"`
+	ElementalConfig ElementalConfig `yaml:"elementalConfig"`
 	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
 }
 
@@ -21,6 +22,20 @@ type Image struct {
 	ImageType       string `yaml:"imageType"`
 	BaseImage       string `yaml:"baseImage"`
 	OutputImageName string `yaml:"outputImageName"`
+}
+
+type ElementalConfig struct {
+	Elemental Elemental `yaml:"elemental"`
+}
+
+type Elemental struct {
+	Registration struct {
+		RegistrationURL string `yaml:"url"`
+		CACert          string `yaml:"ca-cert"`
+		EmulateTPM      bool   `yaml:"emulate-tpm"`
+		EmulateTPMSeed  int    `yaml:"emulated-tpm-seed"`
+		AuthType        string `yaml:"auth"`
+	} `yaml:"registration"`
 }
 
 type OperatingSystem struct {

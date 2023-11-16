@@ -1,8 +1,16 @@
 apiVersion: 1.0
 image:
   imageType: iso
-  baseImage: slemicro5.5.iso
-  outputImageName: eibimage.iso
+  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM.install.iso
+  outputImageName: eibimage-elemental.iso
+elementalConfig:
+  elemental:
+    registration:
+      url: https://elemental.docs.rancher.com
+      ca-cert: sample-ca-cert
+      emulate-tpm: true
+      emulated-tpm-seed: 1
+      auth: tpm
 operatingSystem:
   kernelArgs:
     - alpha=foo
