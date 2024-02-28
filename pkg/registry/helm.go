@@ -195,14 +195,23 @@ func setChartContent(resource map[string]any, chartPath string) error {
 		return fmt.Errorf("'chartContent' field is already set")
 	}
 
-	data, err := os.ReadFile(chartPath)
+	chartContent, err := GetChartContent(chartPath)
 	if err != nil {
-		return fmt.Errorf("reading chart: %w", err)
+		return fmt.Errorf("getting chart content: %w", err)
 	}
-	spec["chartContent"] = base64.StdEncoding.EncodeToString(data)
+	spec["chartContent"] = chartContent
 
 	delete(spec, "repo")
 	delete(spec, "chart")
 
 	return nil
+}
+
+func GetChartContent(chartPath string) (string, error) {
+	data, err := os.ReadFile(chartPath)
+	if err != nil {
+		return "", fmt.Errorf("reading chart: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(data), nil
 }

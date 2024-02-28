@@ -3,6 +3,7 @@ package build
 import (
 	"errors"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/rancher"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -313,6 +314,17 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 		ctx.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
 			Cache: c,
 		}
+	}
+
+	if ctx.ImageDefinition.Rancher.Version != "" {
+		rancherDefinition := ctx.ImageDefinition.Rancher
+		r, err := rancher.New(ctx.BuildDir, ctx.CombustionDir, rancherDefinition, ctx.Helm)
+		if err != nil {
+			audit.AuditInfof("Failed to initialise rancher. %s", checkLogMessage)
+			zap.S().Error(err)
+			return false
+		}
+		ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages = append(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages, r.RancherImages...)
 	}
 
 	return true

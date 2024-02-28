@@ -33,6 +33,7 @@ type Definition struct {
 	OperatingSystem          OperatingSystem          `yaml:"operatingSystem"`
 	EmbeddedArtifactRegistry EmbeddedArtifactRegistry `yaml:"embeddedArtifactRegistry"`
 	Kubernetes               Kubernetes               `yaml:"kubernetes"`
+	Rancher                  Rancher                  `yaml:"rancher"`
 }
 
 type Arch string
@@ -161,6 +162,15 @@ type Node struct {
 
 type Manifests struct {
 	URLs []string `yaml:"urls"`
+}
+
+type Rancher struct {
+	Version     string      `yaml:"version"`
+	CertManager CertManager `yaml:"certManager"`
+}
+
+type CertManager struct {
+	Version string `yaml:"version"`
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {
