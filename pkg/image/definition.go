@@ -77,6 +77,7 @@ type OperatingSystem struct {
 	Proxy            Proxy                  `yaml:"proxy"`
 	Keymap           string                 `yaml:"keymap"`
 	EnableFips       bool                   `yaml:"enableFIPS"`
+	LuksKey          string                 `yaml:"luksKey"`
 }
 
 type IsoConfiguration struct {

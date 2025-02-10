@@ -5,6 +5,7 @@ image:
   baseImage: sl-micro6.0.iso
   outputImageName: eibimage.iso
 operatingSystem:
+  luksKey: 1234
   isoConfiguration:
     installDevice: /dev/sda
   rawConfiguration:
