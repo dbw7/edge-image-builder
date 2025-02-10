@@ -122,6 +122,10 @@ func TestParse(t *testing.T) {
 	installDevice := definition.OperatingSystem.IsoConfiguration.InstallDevice
 	assert.Equal(t, "/dev/sda", installDevice)
 
+	// Operating System -> LuksKey
+	luksKey := definition.OperatingSystem.LuksKey
+	assert.Equal(t, "1234", luksKey)
+
 	// Operating System -> Time
 	time := definition.OperatingSystem.Time
 	assert.Equal(t, "Europe/London", time.Timezone)
