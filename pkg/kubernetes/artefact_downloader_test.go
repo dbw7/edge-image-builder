@@ -1,7 +1,7 @@
 package kubernetes
 
 import (
-	context2 "github.com/suse-edge/edge-image-builder/pkg/context"
+	config "github.com/suse-edge/edge-image-builder/pkg/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,10 +10,10 @@ import (
 
 func TestRKE2InstallerArtefacts(t *testing.T) {
 	x86Artefacts := []string{"rke2.linux-amd64.tar.gz", "sha256sum-amd64.txt"}
-	assert.Equal(t, x86Artefacts, rke2InstallerArtefacts(context2.ArchTypeX86))
+	assert.Equal(t, x86Artefacts, rke2InstallerArtefacts(config.ArchTypeX86))
 
 	armArtefacts := []string{"rke2.linux-arm64.tar.gz", "sha256sum-arm64.txt"}
-	assert.Equal(t, armArtefacts, rke2InstallerArtefacts(context2.ArchTypeARM))
+	assert.Equal(t, armArtefacts, rke2InstallerArtefacts(config.ArchTypeARM))
 }
 
 func TestRKE2ImageArtefacts(t *testing.T) {
@@ -21,33 +21,33 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		name              string
 		cni               string
 		multusEnabled     bool
-		arch              context2.Arch
+		arch              config.Arch
 		expectedArtefacts []string
 		expectedError     string
 	}{
 		{
 			name:          "CNI not specified",
-			arch:          context2.ArchTypeX86,
+			arch:          config.ArchTypeX86,
 			expectedError: "CNI not specified",
 		},
 		{
 			name:          "CNI not supported",
 			cni:           "flannel",
-			arch:          context2.ArchTypeX86,
+			arch:          config.ArchTypeX86,
 			expectedError: "unsupported CNI: flannel",
 		},
 		{
 			name: "x86_64 artefacts without CNI",
-			cni:  context2.CNITypeNone,
-			arch: context2.ArchTypeX86,
+			cni:  config.CNITypeNone,
+			arch: config.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
 			},
 		},
 		{
 			name: "x86_64 artefacts with canal CNI",
-			cni:  context2.CNITypeCanal,
-			arch: context2.ArchTypeX86,
+			cni:  config.CNITypeCanal,
+			arch: config.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
 				"rke2-images-canal.linux-amd64.tar.zst",
@@ -55,8 +55,8 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "x86_64 artefacts with calico CNI",
-			cni:  context2.CNITypeCalico,
-			arch: context2.ArchTypeX86,
+			cni:  config.CNITypeCalico,
+			arch: config.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
 				"rke2-images-calico.linux-amd64.tar.zst",
@@ -64,8 +64,8 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "x86_64 artefacts with cilium CNI",
-			cni:  context2.CNITypeCilium,
-			arch: context2.ArchTypeX86,
+			cni:  config.CNITypeCilium,
+			arch: config.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
 				"rke2-images-cilium.linux-amd64.tar.zst",
@@ -73,9 +73,9 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		},
 		{
 			name:          "x86_64 artefacts with cilium CNI + multus",
-			cni:           context2.CNITypeCilium,
+			cni:           config.CNITypeCilium,
 			multusEnabled: true,
-			arch:          context2.ArchTypeX86,
+			arch:          config.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
 				"rke2-images-cilium.linux-amd64.tar.zst",
@@ -84,16 +84,16 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "aarch64 artefacts for CNI none",
-			cni:  context2.CNITypeNone,
-			arch: context2.ArchTypeARM,
+			cni:  config.CNITypeNone,
+			arch: config.ArchTypeARM,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-arm64.tar.zst",
 			},
 		},
 		{
 			name: "aarch64 artefacts with canal CNI",
-			cni:  context2.CNITypeCanal,
-			arch: context2.ArchTypeARM,
+			cni:  config.CNITypeCanal,
+			arch: config.ArchTypeARM,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-arm64.tar.zst",
 				"rke2-images-canal.linux-arm64.tar.zst",
@@ -101,8 +101,8 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "aarch64 artefacts with calico CNI",
-			cni:  context2.CNITypeCalico,
-			arch: context2.ArchTypeARM,
+			cni:  config.CNITypeCalico,
+			arch: config.ArchTypeARM,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-arm64.tar.zst",
 				"rke2-images-calico.linux-arm64.tar.zst",
@@ -110,8 +110,8 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "aarch64 artefacts with cilium CNI",
-			cni:  context2.CNITypeCilium,
-			arch: context2.ArchTypeARM,
+			cni:  config.CNITypeCilium,
+			arch: config.ArchTypeARM,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-arm64.tar.zst",
 				"rke2-images-cilium.linux-arm64.tar.zst",
@@ -119,9 +119,9 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		},
 		{
 			name:          "aarch64 artefacts with canal CNI + multus",
-			cni:           context2.CNITypeCanal,
+			cni:           config.CNITypeCanal,
 			multusEnabled: true,
-			arch:          context2.ArchTypeARM,
+			arch:          config.ArchTypeARM,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-arm64.tar.zst",
 				"rke2-images-canal.linux-arm64.tar.zst",
@@ -147,16 +147,16 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 
 func TestK3sInstallerArtefacts(t *testing.T) {
 	x86Artefacts := []string{"k3s"}
-	assert.Equal(t, x86Artefacts, k3sInstallerArtefacts(context2.ArchTypeX86))
+	assert.Equal(t, x86Artefacts, k3sInstallerArtefacts(config.ArchTypeX86))
 
 	armArtefacts := []string{"k3s-arm64"}
-	assert.Equal(t, armArtefacts, k3sInstallerArtefacts(context2.ArchTypeARM))
+	assert.Equal(t, armArtefacts, k3sInstallerArtefacts(config.ArchTypeARM))
 }
 
 func TestK3sImageArtefacts(t *testing.T) {
 	x86Artefacts := []string{"k3s-airgap-images-amd64.tar.zst"}
-	assert.Equal(t, x86Artefacts, k3sImageArtefacts(context2.ArchTypeX86))
+	assert.Equal(t, x86Artefacts, k3sImageArtefacts(config.ArchTypeX86))
 
 	armArtefacts := []string{"k3s-airgap-images-arm64.tar.zst"}
-	assert.Equal(t, armArtefacts, k3sImageArtefacts(context2.ArchTypeARM))
+	assert.Equal(t, armArtefacts, k3sImageArtefacts(config.ArchTypeARM))
 }

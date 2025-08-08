@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -20,7 +20,7 @@ const (
 //go:embed templates/13b-add-users.sh.tpl
 var usersScript string
 
-func configureUsers(ctx *context.Context) ([]string, error) {
+func configureUsers(ctx *config.Context) ([]string, error) {
 	// Punch out early if there are no users
 	if len(ctx.Definition.GetOperatingSystem().GetUsers()) == 0 {
 		log.AuditComponentSkipped(usersComponentName)

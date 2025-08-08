@@ -2,7 +2,7 @@ package helm
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"io"
 	"net/url"
 	"os"
@@ -45,7 +45,7 @@ func chartPath(repoName, repoURL, chart string) string {
 	return path
 }
 
-func (h *Helm) AddRepo(repo *context.HelmRepository) error {
+func (h *Helm) AddRepo(repo *config.HelmRepository) error {
 	logFile := filepath.Join(h.outputDir, repoAddLogFileName)
 
 	file, err := os.OpenFile(logFile, outputFileFlags, fileio.NonExecutablePerms)
@@ -67,7 +67,7 @@ func (h *Helm) AddRepo(repo *context.HelmRepository) error {
 	return cmd.Run()
 }
 
-func addRepoCommand(repo *context.HelmRepository, certsDir string, output io.Writer) *exec.Cmd {
+func addRepoCommand(repo *config.HelmRepository, certsDir string, output io.Writer) *exec.Cmd {
 	var args []string
 	args = append(args, "repo", "add", repo.Name, repo.URL)
 
@@ -89,7 +89,7 @@ func addRepoCommand(repo *context.HelmRepository, certsDir string, output io.Wri
 	return cmd
 }
 
-func (h *Helm) RegistryLogin(repo *context.HelmRepository) error {
+func (h *Helm) RegistryLogin(repo *config.HelmRepository) error {
 	logFile := filepath.Join(h.outputDir, registryLoginFileName)
 
 	file, err := os.OpenFile(logFile, outputFileFlags, fileio.NonExecutablePerms)
@@ -116,7 +116,7 @@ func (h *Helm) RegistryLogin(repo *context.HelmRepository) error {
 	return cmd.Run()
 }
 
-func registryLoginCommand(host string, repo *context.HelmRepository, certsDir string, output io.Writer) *exec.Cmd {
+func registryLoginCommand(host string, repo *config.HelmRepository, certsDir string, output io.Writer) *exec.Cmd {
 	var args []string
 	args = append(args, "registry", "login", host)
 
@@ -138,7 +138,7 @@ func registryLoginCommand(host string, repo *context.HelmRepository, certsDir st
 	return cmd
 }
 
-func (h *Helm) Pull(chart string, repo *context.HelmRepository, version, destDir string) (string, error) {
+func (h *Helm) Pull(chart string, repo *config.HelmRepository, version, destDir string) (string, error) {
 	logFile := filepath.Join(h.outputDir, pullLogFileName)
 
 	file, err := os.OpenFile(logFile, outputFileFlags, fileio.NonExecutablePerms)
@@ -179,7 +179,7 @@ func (h *Helm) Pull(chart string, repo *context.HelmRepository, version, destDir
 	return chartPath, nil
 }
 
-func pullCommand(chart string, repo *context.HelmRepository, version, destDir, certsDir string, output io.Writer) *exec.Cmd {
+func pullCommand(chart string, repo *config.HelmRepository, version, destDir, certsDir string, output io.Writer) *exec.Cmd {
 	path := chartPath(repo.Name, repo.URL, chart)
 
 	var args []string

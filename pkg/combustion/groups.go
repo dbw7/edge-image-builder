@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -20,7 +20,7 @@ const (
 //go:embed templates/13a-add-groups.sh.tpl
 var groupsScript string
 
-func configureGroups(ctx *context.Context) ([]string, error) {
+func configureGroups(ctx *config.Context) ([]string, error) {
 	// Punch out early if there are no groups
 	if len(ctx.Definition.GetOperatingSystem().GetGroups()) == 0 {
 		log.AuditComponentSkipped(groupsComponentName)

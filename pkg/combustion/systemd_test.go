@@ -1,7 +1,7 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,7 +18,7 @@ func TestConfigureSystemd_NoServices(t *testing.T) {
 	defer teardown()
 
 	def.OperatingSystem = image.OperatingSystem{
-		Systemd: context.Systemd{},
+		Systemd: config.Systemd{},
 	}
 
 	ctx.Definition = def
@@ -37,7 +37,7 @@ func TestConfigureSystemd_BothServiceTypes(t *testing.T) {
 	defer teardown()
 
 	def.OperatingSystem = image.OperatingSystem{
-		Systemd: context.Systemd{
+		Systemd: config.Systemd{
 			Enable:  []string{"enable0"},
 			Disable: []string{"disable0", "disable1"},
 		},

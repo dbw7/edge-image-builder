@@ -1,10 +1,10 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
-func ComponentHelmCharts(ctx *context.Context) ([]context.HelmChart, []context.HelmRepository) {
+func ComponentHelmCharts(ctx *config.Context) ([]config.HelmChart, []config.HelmRepository) {
 	if ctx.Definition.GetKubernetes().Version == "" {
 		return nil, nil
 	}
@@ -19,11 +19,11 @@ func ComponentHelmCharts(ctx *context.Context) ([]context.HelmChart, []context.H
 		installationNamespace = "kube-system"
 	)
 
-	var charts []context.HelmChart
-	var repos []context.HelmRepository
+	var charts []config.HelmChart
+	var repos []config.HelmRepository
 
 	if ctx.Definition.GetKubernetes().Network.APIVIP4 != "" || ctx.Definition.GetKubernetes().Network.APIVIP6 != "" {
-		metalLBChart := context.HelmChart{
+		metalLBChart := config.HelmChart{
 			Name:                  ctx.ArtifactSources.MetalLB.Chart,
 			RepositoryName:        metallbRepositoryName,
 			TargetNamespace:       metallbNamespace,
@@ -32,7 +32,7 @@ func ComponentHelmCharts(ctx *context.Context) ([]context.HelmChart, []context.H
 			Version:               ctx.ArtifactSources.MetalLB.Version,
 		}
 
-		endpointCopierOperatorChart := context.HelmChart{
+		endpointCopierOperatorChart := config.HelmChart{
 			Name:                  ctx.ArtifactSources.EndpointCopierOperator.Chart,
 			RepositoryName:        endpointCopierOperatorRepositoryName,
 			TargetNamespace:       endpointCopierOperatorNamespace,
@@ -43,12 +43,12 @@ func ComponentHelmCharts(ctx *context.Context) ([]context.HelmChart, []context.H
 
 		charts = append(charts, metalLBChart, endpointCopierOperatorChart)
 
-		metallbRepo := context.HelmRepository{
+		metallbRepo := config.HelmRepository{
 			Name: metallbRepositoryName,
 			URL:  ctx.ArtifactSources.MetalLB.Repository,
 		}
 
-		endpointCopierOperatorRepo := context.HelmRepository{
+		endpointCopierOperatorRepo := config.HelmRepository{
 			Name: endpointCopierOperatorRepositoryName,
 			URL:  ctx.ArtifactSources.EndpointCopierOperator.Repository,
 		}

@@ -3,10 +3,10 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"go.uber.org/zap"
@@ -20,8 +20,8 @@ const (
 //go:embed templates/cleanup-combustion.sh
 var cleanupScript string
 
-func configureCleanup(ctx *context.Context) ([]string, error) {
-	if ctx.Definition.GetImage().ImageType != context.TypeRAW {
+func configureCleanup(ctx *config.Context) ([]string, error) {
+	if ctx.Definition.GetImage().ImageType != config.TypeRAW {
 		log.AuditComponentSkipped(cleanupComponentName)
 		zap.S().Info("skipping cleanup component, image type is not raw")
 		return nil, nil

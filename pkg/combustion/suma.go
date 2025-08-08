@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -20,7 +20,7 @@ const (
 //go:embed templates/30-suma-register.sh.tpl
 var sumaScript string
 
-func configureSuma(ctx *context.Context) ([]string, error) {
+func configureSuma(ctx *config.Context) ([]string, error) {
 	suma := ctx.Definition.GetOperatingSystem().GetSuma()
 	if suma.Host == "" {
 		log.AuditComponentSkipped(sumaComponentName)
@@ -36,7 +36,7 @@ func configureSuma(ctx *context.Context) ([]string, error) {
 	return []string{sumaScriptName}, nil
 }
 
-func writeSumaCombustionScript(ctx *context.Context) error {
+func writeSumaCombustionScript(ctx *config.Context) error {
 	sumaScriptFilename := filepath.Join(ctx.CombustionDir, sumaScriptName)
 
 	data, err := template.Parse(sumaScriptName, sumaScript, ctx.Definition.GetOperatingSystem().GetSuma())

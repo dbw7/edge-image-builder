@@ -2,23 +2,23 @@ package build
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
 type imageConfigurator interface {
-	Configure(ctx *context.Context) error
+	Configure(ctx *config.Context) error
 }
 
 type Builder struct {
-	context           *context.Context
+	context           *config.Context
 	imageConfigurator imageConfigurator
 }
 
-func NewBuilder(ctx *context.Context, imageConfigurator imageConfigurator) *Builder {
+func NewBuilder(ctx *config.Context, imageConfigurator imageConfigurator) *Builder {
 	return &Builder{
 		context:           ctx,
 		imageConfigurator: imageConfigurator,
@@ -34,13 +34,13 @@ func (b *Builder) Build() error {
 	}
 
 	switch b.context.Definition.GetImage().ImageType {
-	case context.TypeISO:
+	case config.TypeISO:
 		log.Audit("Building ISO image...")
 		if err := b.buildIsoImage(); err != nil {
 			log.Audit("Error building ISO image.")
 			return err
 		}
-	case context.TypeRAW:
+	case config.TypeRAW:
 		log.Audit("Building RAW image...")
 		if err := b.buildRawImage(); err != nil {
 			log.Audit("Error building RAW image.")
@@ -48,7 +48,7 @@ func (b *Builder) Build() error {
 		}
 	default:
 		return fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
-			context.TypeISO, context.TypeRAW)
+			config.TypeISO, config.TypeRAW)
 	}
 
 	log.Auditf("Build complete, the image can be found at: %s",

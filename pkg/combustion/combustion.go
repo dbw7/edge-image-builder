@@ -3,12 +3,12 @@ package combustion
 import (
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
@@ -21,7 +21,7 @@ import (
 //
 // configureComponent returns a slice of scripts which should be executed as part of the Combustion script.
 // Result can also be an empty slice or nil if this is not necessary.
-type configureComponent func(context *context.Context) ([]string, error)
+type configureComponent func(context *config.Context) ([]string, error)
 
 type networkConfigGenerator interface {
 	GenerateNetworkConfig(configDir, outputDir string, outputWriter io.Writer) error
@@ -36,12 +36,12 @@ type kubernetesScriptDownloader interface {
 }
 
 type kubernetesArtefactDownloader interface {
-	DownloadRKE2Artefacts(arch context.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
-	DownloadK3sArtefacts(arch context.Arch, version, installPath, imagesPath string) error
+	DownloadRKE2Artefacts(arch config.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
+	DownloadK3sArtefacts(arch config.Arch, version, installPath, imagesPath string) error
 }
 
 type rpmResolver interface {
-	Resolve(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error)
+	Resolve(packages *config.Packages, localRPMConfig *config.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error)
 }
 
 type rpmRepoCreator interface {
@@ -71,7 +71,7 @@ type Combustion struct {
 
 // Configure iterates over all separate Combustion components and configures them independently.
 // If all of those are successful, the Combustion script is assembled and written to the file system.
-func (c *Combustion) Configure(ctx *context.Context) error {
+func (c *Combustion) Configure(ctx *config.Context) error {
 	var combustionScripts []string
 
 	// EIB Combustion script prefix ranges:
@@ -197,11 +197,11 @@ func (c *Combustion) Configure(ctx *context.Context) error {
 	return nil
 }
 
-func generateComponentPath(ctx *context.Context, componentDir string) string {
+func generateComponentPath(ctx *config.Context, componentDir string) string {
 	return filepath.Join(ctx.ImageConfigDir, componentDir)
 }
 
-func isComponentConfigured(ctx *context.Context, componentDir string) bool {
+func isComponentConfigured(ctx *config.Context, componentDir string) bool {
 	if componentDir == "" {
 		zap.S().Warn("Component dir not provided")
 		return false

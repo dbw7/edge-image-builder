@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"io"
 	"os"
 	"os/exec"
@@ -36,7 +36,7 @@ var (
 	k8sRegistryMirrors string
 )
 
-func (c *Combustion) configureRegistry(ctx *context.Context) ([]string, error) {
+func (c *Combustion) configureRegistry(ctx *config.Context) ([]string, error) {
 	if !IsEmbeddedArtifactRegistryConfigured(ctx) {
 		log.AuditComponentSkipped(registryComponentName)
 		return nil, nil
@@ -92,7 +92,7 @@ func generateRegistryTar(imageTarDest string, outputWriter io.Writer) error {
 	return nil
 }
 
-func loginToRegistry(registry context.Registry, outputWriter io.Writer) error {
+func loginToRegistry(registry config.Registry, outputWriter io.Writer) error {
 	args := []string{"login", registry.URI, "--username", registry.Authentication.Username, "--password", registry.Authentication.Password}
 
 	cmd := exec.Command(hauler, args...)
@@ -102,7 +102,7 @@ func loginToRegistry(registry context.Registry, outputWriter io.Writer) error {
 	return cmd.Run()
 }
 
-func writeRegistryScript(ctx *context.Context) (string, error) {
+func writeRegistryScript(ctx *config.Context) (string, error) {
 	values := struct {
 		RegistryPort      string
 		RegistryDir       string
@@ -127,7 +127,7 @@ func writeRegistryScript(ctx *context.Context) (string, error) {
 	return registryScriptName, nil
 }
 
-func IsEmbeddedArtifactRegistryConfigured(ctx *context.Context) bool {
+func IsEmbeddedArtifactRegistryConfigured(ctx *config.Context) bool {
 	return len(ctx.Definition.GetEmbeddedArtifactRegistry().ContainerImages) != 0 ||
 		len(ctx.Definition.GetKubernetes().Manifests.URLs) != 0 ||
 		len(ctx.Definition.GetKubernetes().Helm.Charts) != 0 ||
@@ -149,7 +149,7 @@ func getImageHostnames(containerImages []string) []string {
 	return hostnames
 }
 
-func writeRegistryMirrors(ctx *context.Context, hostnames []string) error {
+func writeRegistryMirrors(ctx *config.Context, hostnames []string) error {
 	artefactsPath := kubernetesArtefactsPath(ctx)
 	if err := os.MkdirAll(artefactsPath, os.ModePerm); err != nil {
 		return fmt.Errorf("creating kubernetes artefacts path: %w", err)
@@ -176,7 +176,7 @@ func writeRegistryMirrors(ctx *context.Context, hostnames []string) error {
 	return nil
 }
 
-func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *context.Context, containerImages []string) (string, error) {
+func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *config.Context, containerImages []string) (string, error) {
 	if len(containerImages) == 0 {
 		return "", fmt.Errorf("no container images specified")
 	}
@@ -212,11 +212,11 @@ func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *context.Context, con
 	return script, nil
 }
 
-func registryArtefactsPath(ctx *context.Context) string {
+func registryArtefactsPath(ctx *config.Context) string {
 	return filepath.Join(ctx.ArtefactsDir, registryDir)
 }
 
-func (c *Combustion) populateRegistry(ctx *context.Context, images []string) error {
+func (c *Combustion) populateRegistry(ctx *config.Context, images []string) error {
 	imageCacheDir := filepath.Join(ctx.CacheDir, "images")
 	if err := os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating container image cache dir: %w", err)

@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
@@ -30,12 +30,12 @@ func (m mockKubernetesScriptDownloader) DownloadInstallScript(distribution, dest
 }
 
 type mockKubernetesArtefactDownloader struct {
-	downloadRKE2Artefacts func(arch context.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
-	downloadK3sArtefacts  func(arch context.Arch, version, installPath, imagesPath string) error
+	downloadRKE2Artefacts func(arch config.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
+	downloadK3sArtefacts  func(arch config.Arch, version, installPath, imagesPath string) error
 }
 
 func (m mockKubernetesArtefactDownloader) DownloadRKE2Artefacts(
-	arch context.Arch,
+	arch config.Arch,
 	version string,
 	cni string,
 	multusEnabled bool,
@@ -49,7 +49,7 @@ func (m mockKubernetesArtefactDownloader) DownloadRKE2Artefacts(
 	panic("not implemented")
 }
 
-func (m mockKubernetesArtefactDownloader) DownloadK3sArtefacts(arch context.Arch, version, installPath, imagesPath string) error {
+func (m mockKubernetesArtefactDownloader) DownloadK3sArtefacts(arch config.Arch, version, installPath, imagesPath string) error {
 	if m.downloadK3sArtefacts != nil {
 		return m.downloadK3sArtefacts(arch, version, installPath, imagesPath)
 	}
@@ -88,7 +88,7 @@ func (m mockEmbeddedRegistry) ManifestsPath() string {
 }
 
 func TestConfigureKubernetes_Skipped(t *testing.T) {
-	ctx := &context.Context{
+	ctx := &config.Context{
 		Definition: &image.Definition{},
 	}
 
@@ -100,9 +100,9 @@ func TestConfigureKubernetes_Skipped(t *testing.T) {
 }
 
 func TestConfigureKubernetes_UnsupportedVersion(t *testing.T) {
-	ctx := &context.Context{
+	ctx := &config.Context{
 		Definition: &image.Definition{
-			Kubernetes: context.Kubernetes{
+			Kubernetes: config.Kubernetes{
 				Version: "v1.30.3",
 			},
 		},
@@ -120,7 +120,7 @@ func TestConfigureKubernetes_ScriptInstallerErrorK3s(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
 	}
 
@@ -144,7 +144,7 @@ func TestConfigureKubernetes_ScriptInstallerErrorRKE2(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
 	}
 
@@ -168,7 +168,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorK3s(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
 	}
 
@@ -181,7 +181,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorK3s(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadK3sArtefacts: func(arch context.Arch, version string, installPath, imagesPath string) error {
+			downloadK3sArtefacts: func(arch config.Arch, version string, installPath, imagesPath string) error {
 				return fmt.Errorf("some error")
 			},
 		},
@@ -197,7 +197,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
 	}
 
@@ -210,7 +210,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch context.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(arch config.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
 				return fmt.Errorf("some error")
 			},
 		},
@@ -226,9 +226,9 @@ func TestConfigureKubernetes_Successful_SingleNode_K3s_IPv4(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
@@ -243,7 +243,7 @@ func TestConfigureKubernetes_Successful_SingleNode_K3s_IPv4(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadK3sArtefacts: func(arch context.Arch, version string, installPath, imagesPath string) error {
+			downloadK3sArtefacts: func(arch config.Arch, version string, installPath, imagesPath string) error {
 				binary := filepath.Join(installPath, "cool-k3s-binary")
 				return os.WriteFile(binary, nil, os.ModePerm)
 			},
@@ -301,9 +301,9 @@ func TestConfigureKubernetes_Successful_SingleNode_K3s_IPv6(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP6: "fd12:3456:789a::21",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
@@ -318,7 +318,7 @@ func TestConfigureKubernetes_Successful_SingleNode_K3s_IPv6(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadK3sArtefacts: func(arch context.Arch, version string, installPath, imagesPath string) error {
+			downloadK3sArtefacts: func(arch config.Arch, version string, installPath, imagesPath string) error {
 				binary := filepath.Join(installPath, "cool-k3s-binary")
 				return os.WriteFile(binary, nil, os.ModePerm)
 			},
@@ -376,9 +376,9 @@ func TestConfigureKubernetes_Successful_SingleNode_K3s_Dualstack_PrioIPv4(t *tes
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.122.100",
 			APIVIP6: "fd12:3456:789a::21",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
@@ -394,7 +394,7 @@ func TestConfigureKubernetes_Successful_SingleNode_K3s_Dualstack_PrioIPv4(t *tes
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadK3sArtefacts: func(arch context.Arch, version string, installPath, imagesPath string) error {
+			downloadK3sArtefacts: func(arch config.Arch, version string, installPath, imagesPath string) error {
 				binary := filepath.Join(installPath, "cool-k3s-binary")
 				return os.WriteFile(binary, nil, os.ModePerm)
 			},
@@ -453,13 +453,13 @@ func TestConfigureKubernetes_Successful_MultiNode_K3s_IPv4(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 			APIVIP4: "192.168.122.100",
 		},
-		Nodes: []context.Node{
+		Nodes: []config.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -480,7 +480,7 @@ func TestConfigureKubernetes_Successful_MultiNode_K3s_IPv4(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadK3sArtefacts: func(arch context.Arch, version, installPath, imagesPath string) error {
+			downloadK3sArtefacts: func(arch config.Arch, version, installPath, imagesPath string) error {
 				binary := filepath.Join(installPath, "cool-k3s-binary")
 				return os.WriteFile(binary, nil, os.ModePerm)
 			},
@@ -587,13 +587,13 @@ func TestConfigureKubernetes_Successful_MultiNode_K3s_IPv6(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 			APIVIP6: "fd12:3456:789a::21",
 		},
-		Nodes: []context.Node{
+		Nodes: []config.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -614,7 +614,7 @@ func TestConfigureKubernetes_Successful_MultiNode_K3s_IPv6(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadK3sArtefacts: func(arch context.Arch, version, installPath, imagesPath string) error {
+			downloadK3sArtefacts: func(arch config.Arch, version, installPath, imagesPath string) error {
 				binary := filepath.Join(installPath, "cool-k3s-binary")
 				return os.WriteFile(binary, nil, os.ModePerm)
 			},
@@ -721,14 +721,14 @@ func TestConfigureKubernetes_Successful_MultiNode_K3s_Dualstack_PrioIPv4(t *test
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 			APIVIP4: "192.168.122.100",
 			APIVIP6: "fd12:3456:789a::21",
 		},
-		Nodes: []context.Node{
+		Nodes: []config.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -749,7 +749,7 @@ func TestConfigureKubernetes_Successful_MultiNode_K3s_Dualstack_PrioIPv4(t *test
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadK3sArtefacts: func(arch context.Arch, version, installPath, imagesPath string) error {
+			downloadK3sArtefacts: func(arch config.Arch, version, installPath, imagesPath string) error {
 				binary := filepath.Join(installPath, "cool-k3s-binary")
 				return os.WriteFile(binary, nil, os.ModePerm)
 			},
@@ -859,14 +859,14 @@ func TestConfigureKubernetes_Successful_MultiNode_K3s_Dualstack_PrioIPv6(t *test
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 			APIVIP4: "192.168.122.100",
 			APIVIP6: "fd12:3456:789a::21",
 		},
-		Nodes: []context.Node{
+		Nodes: []config.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -887,7 +887,7 @@ func TestConfigureKubernetes_Successful_MultiNode_K3s_Dualstack_PrioIPv6(t *test
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadK3sArtefacts: func(arch context.Arch, version, installPath, imagesPath string) error {
+			downloadK3sArtefacts: func(arch config.Arch, version, installPath, imagesPath string) error {
 				binary := filepath.Join(installPath, "cool-k3s-binary")
 				return os.WriteFile(binary, nil, os.ModePerm)
 			},
@@ -997,9 +997,9 @@ func TestConfigureKubernetes_Successful_SingleNode_RKE2_IPv4(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
@@ -1014,7 +1014,7 @@ func TestConfigureKubernetes_Successful_SingleNode_RKE2_IPv4(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch context.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(arch config.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
 				return nil
 			},
 		},
@@ -1068,14 +1068,14 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithSi
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 			APIVIP4: "192.168.122.100",
 			APIVIP6: "fd12:3456:789a::21",
 		},
-		Nodes: []context.Node{
+		Nodes: []config.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -1096,7 +1096,7 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithSi
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch context.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(arch config.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
 				return nil
 			},
 		},
@@ -1200,14 +1200,14 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithDu
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 			APIVIP4: "192.168.122.100",
 			APIVIP6: "fd12:3456:789a::21",
 		},
-		Nodes: []context.Node{
+		Nodes: []config.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -1228,7 +1228,7 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithDu
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch context.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(arch config.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
 				return nil
 			},
 		},
@@ -1382,7 +1382,7 @@ func TestConfigureManifests(t *testing.T) {
 	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
-	helmChart := &context.HelmChart{
+	helmChart := &config.HelmChart{
 		Name:                  "apache",
 		RepositoryName:        "apache-repo",
 		TargetNamespace:       "web",
@@ -1451,9 +1451,9 @@ func TestConfigureKubernetes_Successful_RKE2Server_WithManifests(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
@@ -1468,7 +1468,7 @@ func TestConfigureKubernetes_Successful_RKE2Server_WithManifests(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch context.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(arch config.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
 				return nil
 			},
 		},
@@ -1546,9 +1546,9 @@ func TestConfigureKubernetes_Successful_RKE2Server_WithManifests(t *testing.T) {
 }
 
 func TestKubernetesVIPManifestValidIPV4(t *testing.T) {
-	k8s := &context.Kubernetes{
+	k8s := &config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.1.1",
 		},
 	}
@@ -1564,9 +1564,9 @@ func TestKubernetesVIPManifestValidIPV4(t *testing.T) {
 }
 
 func TestKubernetesVIPManifestValidIPV6(t *testing.T) {
-	k8s := &context.Kubernetes{
+	k8s := &config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP6: "fd12:3456:789a::21",
 		},
 	}
@@ -1583,9 +1583,9 @@ func TestKubernetesVIPManifestValidIPV6(t *testing.T) {
 }
 
 func TestKubernetesVIPManifestDualstack(t *testing.T) {
-	k8s := &context.Kubernetes{
+	k8s := &config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.1.1",
 			APIVIP6: "fd12:3456:789a::21",
 		},
@@ -1607,9 +1607,9 @@ func TestCreateNodeIPScript_Dualstack_K3s_PrioIPv6(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.1.1",
 			APIVIP6: "fd12:3456:789a::21",
 		},
@@ -1641,9 +1641,9 @@ func TestCreateNodeIPScript_Dualstack_Rke2_PrioIPv4(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.1.1",
 			APIVIP6: "fd12:3456:789a::21",
 		},
@@ -1675,9 +1675,9 @@ func TestCreateNodeIPScript_IPv4Only(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.1.1",
 		},
 	}
@@ -1695,9 +1695,9 @@ func TestCreateNodeIPScript_IPv6Only(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP6: "fd12:3456:789a::21",
 		},
 	}
@@ -1727,9 +1727,9 @@ func TestCreateNodeIPScript_NodeIPSpecified(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Kubernetes = context.Kubernetes{
+	def.Kubernetes = config.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: context.Network{
+		Network: config.Network{
 			APIVIP4: "192.168.1.1",
 		},
 	}

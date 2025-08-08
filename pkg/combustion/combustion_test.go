@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupContext(t *testing.T) (ctx *context.Context, def *image.Definition, teardown func()) {
+func setupContext(t *testing.T) (ctx *config.Context, def *image.Definition, teardown func()) {
 	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
 
@@ -27,7 +27,7 @@ func setupContext(t *testing.T) (ctx *context.Context, def *image.Definition, te
 
 	def = &image.Definition{}
 
-	ctx = &context.Context{
+	ctx = &config.Context{
 		ImageConfigDir: configDir,
 		BuildDir:       buildDir,
 		CombustionDir:  combustionDir,

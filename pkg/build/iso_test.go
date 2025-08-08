@@ -6,14 +6,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func setupContext(t *testing.T) (ctx *context.Context, teardown func()) {
+func setupContext(t *testing.T) (ctx *config.Context, teardown func()) {
 	// Copied from combustion_test due to time. This should eventually be refactored
 	// to something cleaner.
 
@@ -26,7 +25,7 @@ func setupContext(t *testing.T) (ctx *context.Context, teardown func()) {
 	combustionDir, err := os.MkdirTemp("", "eib-combustion-")
 	require.NoError(t, err)
 
-	ctx = &context.Context{
+	ctx = &config.Context{
 		ImageConfigDir: configDir,
 		BuildDir:       buildDir,
 		CombustionDir:  combustionDir,
@@ -78,7 +77,7 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 
 	ctx.Definition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
-			IsoConfiguration: context.IsoConfiguration{
+			IsoConfiguration: config.IsoConfiguration{
 				InstallDevice: "/dev/vda",
 			},
 		},

@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -20,7 +20,7 @@ const (
 //go:embed templates/12-keymap-setup.sh.tpl
 var keymapScript string
 
-func configureKeymap(ctx *context.Context) ([]string, error) {
+func configureKeymap(ctx *config.Context) ([]string, error) {
 	if err := writeKeymapCombustionScript(ctx); err != nil {
 		log.AuditComponentFailed(keymapComponentName)
 		return nil, err
@@ -30,7 +30,7 @@ func configureKeymap(ctx *context.Context) ([]string, error) {
 	return []string{keymapScriptName}, nil
 }
 
-func writeKeymapCombustionScript(ctx *context.Context) error {
+func writeKeymapCombustionScript(ctx *config.Context) error {
 	keymapScriptFilename := filepath.Join(ctx.CombustionDir, keymapScriptName)
 
 	data, err := template.Parse(keymapScriptName, keymapScript, ctx.Definition.GetOperatingSystem())

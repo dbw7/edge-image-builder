@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	context2 "github.com/suse-edge/edge-image-builder/pkg/context"
+	config "github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -22,9 +22,9 @@ func (d ScriptDownloader) DownloadInstallScript(distribution, destinationPath st
 	var scriptURL string
 
 	switch distribution {
-	case context2.KubernetesDistroRKE2:
+	case config.KubernetesDistroRKE2:
 		scriptURL = rke2InstallScriptURL
-	case context2.KubernetesDistroK3S:
+	case config.KubernetesDistroK3S:
 		scriptURL = k3sInstallScriptURL
 	default:
 		return "", fmt.Errorf("unsupported distribution: %s", distribution)

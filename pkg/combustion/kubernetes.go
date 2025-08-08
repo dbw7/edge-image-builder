@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
@@ -58,7 +58,7 @@ var (
 	nodeIPScriptTemplate string
 )
 
-func (c *Combustion) configureKubernetes(ctx *context.Context) ([]string, error) {
+func (c *Combustion) configureKubernetes(ctx *config.Context) ([]string, error) {
 	k8s := ctx.Definition.GetKubernetes()
 	version := k8s.Version
 
@@ -112,18 +112,18 @@ func (c *Combustion) configureKubernetes(ctx *context.Context) ([]string, error)
 	return []string{script}, nil
 }
 
-func (c *Combustion) kubernetesConfigurator(version string) func(*context.Context, *kubernetes.Cluster) (string, error) {
+func (c *Combustion) kubernetesConfigurator(version string) func(*config.Context, *kubernetes.Cluster) (string, error) {
 	switch {
-	case strings.Contains(version, context.KubernetesDistroRKE2):
+	case strings.Contains(version, config.KubernetesDistroRKE2):
 		return c.configureRKE2
-	case strings.Contains(version, context.KubernetesDistroK3S):
+	case strings.Contains(version, config.KubernetesDistroK3S):
 		return c.configureK3S
 	default:
 		return nil
 	}
 }
 
-func (c *Combustion) downloadKubernetesInstallScript(ctx *context.Context, distribution string) (string, error) {
+func (c *Combustion) downloadKubernetesInstallScript(ctx *config.Context, distribution string) (string, error) {
 	path := kubernetesArtefactsPath(ctx)
 
 	installScript, err := c.KubernetesScriptDownloader.DownloadInstallScript(distribution, path)
@@ -134,10 +134,10 @@ func (c *Combustion) downloadKubernetesInstallScript(ctx *context.Context, distr
 	return prependArtefactPath(filepath.Join(k8sDir, installScript)), nil
 }
 
-func (c *Combustion) configureK3S(ctx *context.Context, cluster *kubernetes.Cluster) (string, error) {
+func (c *Combustion) configureK3S(ctx *config.Context, cluster *kubernetes.Cluster) (string, error) {
 	zap.S().Info("Configuring K3s cluster")
 
-	installScript, err := c.downloadKubernetesInstallScript(ctx, context.KubernetesDistroK3S)
+	installScript, err := c.downloadKubernetesInstallScript(ctx, config.KubernetesDistroK3S)
 	if err != nil {
 		return "", fmt.Errorf("downloading k3s install script: %w", err)
 	}
@@ -195,7 +195,7 @@ func (c *Combustion) configureK3S(ctx *context.Context, cluster *kubernetes.Clus
 	return storeKubernetesInstaller(ctx, "multi-node-k3s", k3sMultiNodeInstaller, templateValues)
 }
 
-func (c *Combustion) downloadK3sArtefacts(ctx *context.Context) (binaryPath, imagesPath string, err error) {
+func (c *Combustion) downloadK3sArtefacts(ctx *config.Context) (binaryPath, imagesPath string, err error) {
 	imagesPath = filepath.Join(k8sDir, k8sImagesDir)
 	imagesDestination := filepath.Join(ctx.ArtefactsDir, imagesPath)
 	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
@@ -236,10 +236,10 @@ func (c *Combustion) downloadK3sArtefacts(ctx *context.Context) (binaryPath, ima
 	return prependArtefactPath(binaryPath), prependArtefactPath(imagesPath), nil
 }
 
-func (c *Combustion) configureRKE2(ctx *context.Context, cluster *kubernetes.Cluster) (string, error) {
+func (c *Combustion) configureRKE2(ctx *config.Context, cluster *kubernetes.Cluster) (string, error) {
 	zap.S().Info("Configuring RKE2 cluster")
 
-	installScript, err := c.downloadKubernetesInstallScript(ctx, context.KubernetesDistroRKE2)
+	installScript, err := c.downloadKubernetesInstallScript(ctx, config.KubernetesDistroRKE2)
 	if err != nil {
 		return "", fmt.Errorf("downloading RKE2 install script: %w", err)
 	}
@@ -290,7 +290,7 @@ func (c *Combustion) configureRKE2(ctx *context.Context, cluster *kubernetes.Clu
 	return storeKubernetesInstaller(ctx, "multi-node-rke2", rke2MultiNodeInstaller, templateValues)
 }
 
-func storeKubernetesInstaller(ctx *context.Context, templateName, templateContents string, templateValues any) (string, error) {
+func storeKubernetesInstaller(ctx *config.Context, templateName, templateContents string, templateValues any) (string, error) {
 	data, err := template.Parse(templateName, templateContents, templateValues)
 	if err != nil {
 		return "", fmt.Errorf("parsing '%s' template: %w", templateName, err)
@@ -304,7 +304,7 @@ func storeKubernetesInstaller(ctx *context.Context, templateName, templateConten
 	return k8sInstallScript, nil
 }
 
-func (c *Combustion) downloadRKE2Artefacts(ctx *context.Context, cluster *kubernetes.Cluster) (installPath, imagesPath string, err error) {
+func (c *Combustion) downloadRKE2Artefacts(ctx *config.Context, cluster *kubernetes.Cluster) (installPath, imagesPath string, err error) {
 	cni, multusEnabled, err := cluster.ExtractCNI()
 	if err != nil {
 		return "", "", fmt.Errorf("extracting CNI from cluster config: %w", err)
@@ -336,7 +336,7 @@ func (c *Combustion) downloadRKE2Artefacts(ctx *context.Context, cluster *kubern
 	return prependArtefactPath(installPath), prependArtefactPath(imagesPath), nil
 }
 
-func kubernetesVIPManifest(k *context.Kubernetes) (string, error) {
+func kubernetesVIPManifest(k *config.Kubernetes) (string, error) {
 	manifest := struct {
 		APIAddress4 string
 		APIAddress6 string
@@ -344,13 +344,13 @@ func kubernetesVIPManifest(k *context.Kubernetes) (string, error) {
 	}{
 		APIAddress4: k.Network.APIVIP4,
 		APIAddress6: k.Network.APIVIP6,
-		RKE2:        strings.Contains(k.Version, context.KubernetesDistroRKE2),
+		RKE2:        strings.Contains(k.Version, config.KubernetesDistroRKE2),
 	}
 
 	return template.Parse("k8s-vip", k8sVIPManifest, &manifest)
 }
 
-func createNodeIPScript(ctx *context.Context, serverConfig map[string]any) (string, error) {
+func createNodeIPScript(ctx *config.Context, serverConfig map[string]any) (string, error) {
 	// Setting the Node IP only matters if we're doing dual-stack or single-stack IPv6
 	if ctx.Definition.GetKubernetes().Network.APIVIP6 == "" {
 		return "", nil
@@ -370,7 +370,7 @@ func createNodeIPScript(ctx *context.Context, serverConfig map[string]any) (stri
 	}{
 		IPv4Enabled:    isIPv4Enabled,
 		PrioritizeIPv6: kubernetes.IsIPv6Priority(serverConfig),
-		RKE2:           strings.Contains(ctx.Definition.GetKubernetes().Version, context.KubernetesDistroRKE2),
+		RKE2:           strings.Contains(ctx.Definition.GetKubernetes().Version, config.KubernetesDistroRKE2),
 	}
 
 	data, err := template.Parse("set-node-ip", nodeIPScriptTemplate, &manifest)
@@ -420,7 +420,7 @@ func storeKubernetesConfig(config map[string]any, configPath string) error {
 	return os.WriteFile(configPath, data, fileio.NonExecutablePerms)
 }
 
-func (c *Combustion) configureManifests(ctx *context.Context) (string, error) {
+func (c *Combustion) configureManifests(ctx *config.Context) (string, error) {
 	var manifestsPathPopulated bool
 
 	manifestsPath := localKubernetesManifestsPath()
@@ -487,7 +487,7 @@ func (c *Combustion) configureManifests(ctx *context.Context) (string, error) {
 	return prependArtefactPath(manifestsPath), nil
 }
 
-func KubernetesConfigPath(ctx *context.Context) string {
+func KubernetesConfigPath(ctx *config.Context) string {
 	return filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir, k8sServerConfigFile)
 }
 
@@ -495,18 +495,18 @@ func localKubernetesManifestsPath() string {
 	return filepath.Join(k8sDir, k8sManifestsDir)
 }
 
-func KubernetesManifestsPath(ctx *context.Context) string {
+func KubernetesManifestsPath(ctx *config.Context) string {
 	return filepath.Join(ctx.ImageConfigDir, localKubernetesManifestsPath())
 }
 
-func HelmValuesPath(ctx *context.Context) string {
+func HelmValuesPath(ctx *config.Context) string {
 	return filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir, helmValuesDir)
 }
 
-func HelmCertsPath(ctx *context.Context) string {
+func HelmCertsPath(ctx *config.Context) string {
 	return filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir, helmCertsDir)
 }
 
-func kubernetesArtefactsPath(ctx *context.Context) string {
+func kubernetesArtefactsPath(ctx *config.Context) string {
 	return filepath.Join(ctx.ArtefactsDir, k8sDir)
 }

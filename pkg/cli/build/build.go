@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
@@ -70,7 +70,7 @@ func Run(_ *cli.Context) error {
 		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
 	}
 
-	ctx := context.BuildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition, artifactSources)
+	ctx := config.BuildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition, artifactSources)
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
@@ -129,7 +129,7 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 
 	imageDefinition, err := image.ParseImageDefinition(configData)
 	if err != nil {
-		if errors.Is(err, context.ErrorInvalidSchemaVersion) {
+		if errors.Is(err, config.ErrorInvalidSchemaVersion) {
 			m := "Invalid schema version specified. This version of Edge Image Builder supports the following schema versions: %s"
 			msg := fmt.Sprintf(m, strings.Join(version.SupportedSchemaVersions, ", "))
 			return nil, &cmd.Error{
@@ -147,7 +147,7 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 	return imageDefinition, nil
 }
 
-func parseArtifactSources() (*context.ArtifactSources, error) {
+func parseArtifactSources() (*config.ArtifactSources, error) {
 	const artifactsConfigFile = "artifacts.yaml"
 
 	b, err := os.ReadFile(artifactsConfigFile)
@@ -159,7 +159,7 @@ func parseArtifactSources() (*context.ArtifactSources, error) {
 		return nil, fmt.Errorf("reading artifact sources file: %w", err)
 	}
 
-	var sources context.ArtifactSources
+	var sources config.ArtifactSources
 	if err = yaml.Unmarshal(b, &sources); err != nil {
 		return nil, fmt.Errorf("decoding artifacts sources: %w", err)
 	}

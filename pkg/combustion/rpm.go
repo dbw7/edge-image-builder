@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -26,7 +26,7 @@ const (
 //go:embed templates/10-rpm-install.sh.tpl
 var installRPMsScript string
 
-func (c *Combustion) configureRPMs(ctx *context.Context) ([]string, error) {
+func (c *Combustion) configureRPMs(ctx *config.Context) ([]string, error) {
 	if SkipRPMComponent(ctx) {
 		log.AuditComponentSkipped(rpmComponentName)
 		zap.L().Info("Skipping RPM component. Configuration is not provided")
@@ -82,7 +82,7 @@ func (c *Combustion) configureRPMs(ctx *context.Context) ([]string, error) {
 }
 
 // SkipRPMComponent determines whether RPM configuration is needed
-func SkipRPMComponent(ctx *context.Context) bool {
+func SkipRPMComponent(ctx *config.Context) bool {
 	pkg := ctx.Definition.GetOperatingSystem().GetPackages()
 
 	if isComponentConfigured(ctx, rpmDir) {
@@ -129,7 +129,7 @@ func SkipRPMComponent(ctx *context.Context) bool {
 	return true
 }
 
-func writeRPMScript(ctx *context.Context, repoPath string, packages []string) (string, error) {
+func writeRPMScript(ctx *config.Context, repoPath string, packages []string) (string, error) {
 	if len(packages) == 0 {
 		return "", fmt.Errorf("package list cannot be empty")
 	}
@@ -162,21 +162,21 @@ func writeRPMScript(ctx *context.Context, repoPath string, packages []string) (s
 	return installRPMsScriptName, nil
 }
 
-func RPMsPath(ctx *context.Context) string {
+func RPMsPath(ctx *config.Context) string {
 	return generateComponentPath(ctx, rpmDir)
 }
 
-func GPGKeysPath(ctx *context.Context) string {
+func GPGKeysPath(ctx *config.Context) string {
 	rpmDir := RPMsPath(ctx)
 	return filepath.Join(rpmDir, gpgDir)
 }
 
-func fetchLocalRPMConfig(ctx *context.Context) (*context.LocalRPMConfig, error) {
+func fetchLocalRPMConfig(ctx *config.Context) (*config.LocalRPMConfig, error) {
 	if !isComponentConfigured(ctx, rpmDir) {
 		return nil, nil
 	}
 
-	localRPMConfig := &context.LocalRPMConfig{
+	localRPMConfig := &config.LocalRPMConfig{
 		RPMPath: RPMsPath(ctx),
 	}
 

@@ -4,14 +4,14 @@ import (
 	"fmt"
 
 	"github.com/containers/image/v5/docker/reference"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
 const (
 	registryComponent = "Artifact Registry"
 )
 
-func validateEmbeddedArtifactRegistry(ctx *context.Context) []FailedValidation {
+func validateEmbeddedArtifactRegistry(ctx *config.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	registry := ctx.Definition.GetEmbeddedArtifactRegistry()
@@ -22,7 +22,7 @@ func validateEmbeddedArtifactRegistry(ctx *context.Context) []FailedValidation {
 	return failures
 }
 
-func validateContainerImages(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
+func validateContainerImages(ear *config.EmbeddedArtifactRegistry) []FailedValidation {
 	var failures []FailedValidation
 
 	seenContainerImages := make(map[string]bool)
@@ -45,7 +45,7 @@ func validateContainerImages(ear *context.EmbeddedArtifactRegistry) []FailedVali
 	return failures
 }
 
-func validateRegistries(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
+func validateRegistries(ear *config.EmbeddedArtifactRegistry) []FailedValidation {
 	var failures []FailedValidation
 
 	failures = append(failures, validateURLs(ear)...)
@@ -54,7 +54,7 @@ func validateRegistries(ear *context.EmbeddedArtifactRegistry) []FailedValidatio
 	return failures
 }
 
-func validateURLs(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
+func validateURLs(ear *config.EmbeddedArtifactRegistry) []FailedValidation {
 	var failures []FailedValidation
 
 	seenRegistryURLs := make(map[string]bool)
@@ -88,7 +88,7 @@ func validateURLs(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
 	return failures
 }
 
-func validateCredentials(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
+func validateCredentials(ear *config.EmbeddedArtifactRegistry) []FailedValidation {
 	var failures []FailedValidation
 
 	for _, registry := range ear.Registries {

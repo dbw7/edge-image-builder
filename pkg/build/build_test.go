@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -20,7 +20,7 @@ func TestGenerateBuildDirFilename(t *testing.T) {
 	}()
 
 	builder := Builder{
-		context: &context.Context{
+		context: &config.Context{
 			BuildDir: tmpDir,
 		},
 	}
@@ -42,10 +42,10 @@ func TestDeleteNoExistingImage(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		context: &context.Context{
+		context: &config.Context{
 			ImageConfigDir: tmpDir,
 			Definition: &image.Definition{
-				Image: context.Image{
+				Image: config.Image{
 					OutputImageName: "not-there",
 				},
 			},
@@ -66,10 +66,10 @@ func TestDeleteExistingImage(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		context: &context.Context{
+		context: &config.Context{
 			ImageConfigDir: tmpDir,
 			Definition: &image.Definition{
-				Image: context.Image{
+				Image: config.Image{
 					OutputImageName: "not-there",
 				},
 			},

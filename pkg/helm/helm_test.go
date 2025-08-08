@@ -2,7 +2,7 @@ package helm
 
 import (
 	"bytes"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,12 +48,12 @@ func TestHelmChartPath(t *testing.T) {
 func TestAddRepoCommand(t *testing.T) {
 	tests := []struct {
 		name         string
-		repo         *context.HelmRepository
+		repo         *config.HelmRepository
 		expectedArgs []string
 	}{
 		{
 			name: "Valid repository",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
 			},
@@ -67,10 +67,10 @@ func TestAddRepoCommand(t *testing.T) {
 		},
 		{
 			name: "Valid repository with auth",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -89,10 +89,10 @@ func TestAddRepoCommand(t *testing.T) {
 		},
 		{
 			name: "Valid repository with auth and skip TLS verify",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -113,10 +113,10 @@ func TestAddRepoCommand(t *testing.T) {
 		},
 		{
 			name: "Valid repository with auth and plain HTTP",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "http://suse-edge.github.io/charts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -136,10 +136,10 @@ func TestAddRepoCommand(t *testing.T) {
 		},
 		{
 			name: "Valid repository with auth and a ca file",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -179,16 +179,16 @@ func TestRegistryLoginCommand(t *testing.T) {
 	tests := []struct {
 		name         string
 		host         string
-		repo         *context.HelmRepository
+		repo         *config.HelmRepository
 		expectedArgs []string
 	}{
 		{
 			name: "Valid Registry With Auth",
 			host: "registry-1.docker.io",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -207,10 +207,10 @@ func TestRegistryLoginCommand(t *testing.T) {
 		{
 			name: "Valid registry with auth and skip TLS verify",
 			host: "registry-1.docker.io",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -231,10 +231,10 @@ func TestRegistryLoginCommand(t *testing.T) {
 		{
 			name: "Valid registry with auth and plain HTTP",
 			host: "registry-1.docker.io",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -255,10 +255,10 @@ func TestRegistryLoginCommand(t *testing.T) {
 		{
 			name: "Valid registry with auth and a ca file",
 			host: "registry-1.docker.io",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -295,7 +295,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 func TestPullCommand(t *testing.T) {
 	tests := []struct {
 		name         string
-		repo         *context.HelmRepository
+		repo         *config.HelmRepository
 		chart        string
 		version      string
 		destDir      string
@@ -304,7 +304,7 @@ func TestPullCommand(t *testing.T) {
 		{
 			name:  "OCI repository",
 			chart: "apache",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
 			},
@@ -322,7 +322,7 @@ func TestPullCommand(t *testing.T) {
 		},
 		{
 			name: "HTTP repository",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
 			},
@@ -342,7 +342,7 @@ func TestPullCommand(t *testing.T) {
 		{
 			name:  "OCI repository without optional args",
 			chart: "apache",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
 			},
@@ -354,7 +354,7 @@ func TestPullCommand(t *testing.T) {
 		},
 		{
 			name: "HTTP repository without optional args",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
 			},
@@ -367,10 +367,10 @@ func TestPullCommand(t *testing.T) {
 		},
 		{
 			name: "HTTP repository with auth and skip TLS verify",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -386,10 +386,10 @@ func TestPullCommand(t *testing.T) {
 		},
 		{
 			name: "HTTP repository with auth and plain HTTP",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "http://suse-edge.github.io/charts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -406,10 +406,10 @@ func TestPullCommand(t *testing.T) {
 		{
 			name:  "OCI repository with auth and skip TLS verify",
 			chart: "apache",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -425,10 +425,10 @@ func TestPullCommand(t *testing.T) {
 		{
 			name:  "OCI repository with auth and plain HTTP",
 			chart: "apache",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -443,10 +443,10 @@ func TestPullCommand(t *testing.T) {
 		},
 		{
 			name: "HTTP repository with auth and a ca file",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},
@@ -464,10 +464,10 @@ func TestPullCommand(t *testing.T) {
 		{
 			name:  "OCI repository with auth and a ca file",
 			chart: "apache",
-			repo: &context.HelmRepository{
+			repo: &config.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
-				Authentication: context.HelmAuthentication{
+				Authentication: config.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
 				},

@@ -7,14 +7,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestConfigureFIPS_NoConf(t *testing.T) {
 	// Setup
-	var ctx context.Context
+	var ctx config.Context
 
 	ctx.Definition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{},

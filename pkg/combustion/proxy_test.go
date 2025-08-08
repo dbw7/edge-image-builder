@@ -7,18 +7,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestConfigureProxy_NoConf(t *testing.T) {
 	// Setup
-	var ctx context.Context
+	var ctx config.Context
 
 	ctx.Definition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
-			Proxy: context.Proxy{},
+			Proxy: config.Proxy{},
 		},
 	}
 
@@ -36,7 +36,7 @@ func TestConfigureProxy_FullConfiguration(t *testing.T) {
 	defer teardown()
 
 	def.OperatingSystem = image.OperatingSystem{
-		Proxy: context.Proxy{
+		Proxy: config.Proxy{
 			HTTPProxy:  "http://10.0.0.1:3128",
 			HTTPSProxy: "http://10.0.0.1:3128",
 			NoProxy:    []string{"localhost", "127.0.0.1", "edge.suse.com"},

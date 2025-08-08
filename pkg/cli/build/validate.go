@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image/validation"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/urfave/cli/v2"
@@ -48,7 +48,7 @@ func Validate(_ *cli.Context) error {
 		os.Exit(1)
 	}
 
-	ctx := &context.Context{
+	ctx := &config.Context{
 		ImageConfigDir: args.ConfigDir,
 		Definition:     imageDefinition,
 	}
@@ -65,7 +65,7 @@ func Validate(_ *cli.Context) error {
 	return nil
 }
 
-func validateImageDefinition(ctx *context.Context) *cmd.Error {
+func validateImageDefinition(ctx *config.Context) *cmd.Error {
 	failedValidations := validation.ValidateDefinition(ctx)
 	if len(failedValidations) == 0 {
 		return nil

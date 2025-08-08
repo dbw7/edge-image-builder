@@ -7,12 +7,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestValidateElementalNoDir(t *testing.T) {
-	ctx := context.Context{}
+	ctx := config.Context{}
 
 	failures := validateElemental(&ctx)
 	assert.Len(t, failures, 0)
@@ -39,7 +39,7 @@ func TestValidateElemental(t *testing.T) {
 		`valid, registration code no side-loaded rpms`: {
 			Definition: &image.Definition{
 				OperatingSystem: image.OperatingSystem{
-					Packages: context.Packages{
+					Packages: config.Packages{
 						RegCode: "registration-code",
 					},
 				},
@@ -56,7 +56,7 @@ func TestValidateElemental(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx := context.Context{
+			ctx := config.Context{
 				ImageConfigDir: configDir,
 				Definition:     test.Definition,
 			}
@@ -159,7 +159,7 @@ func TestValidateElementalConfigurationManualRPMsNoRegistrationCode(t *testing.T
 		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	ctx := &context.Context{
+	ctx := &config.Context{
 		ImageConfigDir: configDir,
 		Definition:     &image.Definition{},
 	}
@@ -191,11 +191,11 @@ func TestValidateElementalConfigurationManualRPMsWithRegistrationCode(t *testing
 		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	ctx := &context.Context{
+	ctx := &config.Context{
 		ImageConfigDir: configDir,
 		Definition: &image.Definition{
 			OperatingSystem: image.OperatingSystem{
-				Packages: context.Packages{
+				Packages: config.Packages{
 					RegCode: "registration-code",
 				},
 			},
@@ -229,7 +229,7 @@ func TestValidateElementalConfigurationManualRPMsMissingAgent(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	ctx := &context.Context{
+	ctx := &config.Context{
 		ImageConfigDir: configDir,
 		Definition:     &image.Definition{},
 	}
@@ -260,7 +260,7 @@ func TestValidateElementalConfigurationManualRPMsMissingRegister(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	ctx := &context.Context{
+	ctx := &config.Context{
 		ImageConfigDir: configDir,
 		Definition:     &image.Definition{},
 	}

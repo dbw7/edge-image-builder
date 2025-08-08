@@ -7,10 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -18,14 +17,14 @@ import (
 func TestCreateRawImageCopyCommand(t *testing.T) {
 	// Setup
 	def := &image.Definition{
-		Image: context.Image{
+		Image: config.Image{
 			BaseImage:       "base-image",
 			OutputImageName: "build-image",
 		},
 	}
 
 	builder := Builder{
-		context: &context.Context{
+		context: &config.Context{
 			ImageConfigDir: "config-dir",
 			Definition:     def,
 		},
@@ -52,7 +51,7 @@ func TestWriteModifyScript(t *testing.T) {
 	defer teardown()
 
 	def := &image.Definition{
-		Image: context.Image{
+		Image: config.Image{
 			BaseImage:       "base-image",
 			OutputImageName: "build-image",
 		},
@@ -65,14 +64,14 @@ func TestWriteModifyScript(t *testing.T) {
 
 	raw := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
-		RawConfiguration: context.RawConfiguration{
+		RawConfiguration: config.RawConfiguration{
 			DiskSize: "64G",
 		},
 	}
 
 	iso := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
-		IsoConfiguration: context.IsoConfiguration{
+		IsoConfiguration: config.IsoConfiguration{
 			InstallDevice: "/dev/sda",
 		},
 	}
@@ -80,7 +79,7 @@ func TestWriteModifyScript(t *testing.T) {
 	luksKey := "1234"
 	encryptedRaw := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
-		RawConfiguration: context.RawConfiguration{
+		RawConfiguration: config.RawConfiguration{
 			LUKSKey:  luksKey,
 			DiskSize: "64G",
 		},
@@ -88,7 +87,7 @@ func TestWriteModifyScript(t *testing.T) {
 
 	encryptedRawExpand := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
-		RawConfiguration: context.RawConfiguration{
+		RawConfiguration: config.RawConfiguration{
 			LUKSKey:                  luksKey,
 			ExpandEncryptedPartition: true,
 			DiskSize:                 "64G",
@@ -196,7 +195,7 @@ func TestWriteModifyScript(t *testing.T) {
 func TestCreateModifyCommand(t *testing.T) {
 	// Setup
 	builder := Builder{
-		context: &context.Context{
+		context: &config.Context{
 			BuildDir: "build-dir",
 		},
 	}

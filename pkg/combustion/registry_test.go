@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,28 +39,28 @@ func TestWriteRegistryScript(t *testing.T) {
 func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 	tests := []struct {
 		name         string
-		ctx          *context.Context
+		ctx          *config.Context
 		isConfigured bool
 	}{
 		{
 			name: "Everything Defined",
-			ctx: &context.Context{
+			ctx: &config.Context{
 				Definition: &image.Definition{
-					EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
-						ContainerImages: []context.ContainerImage{
+					EmbeddedArtifactRegistry: config.EmbeddedArtifactRegistry{
+						ContainerImages: []config.ContainerImage{
 							{
 								Name: "nginx",
 							},
 						},
 					},
-					Kubernetes: context.Kubernetes{
-						Manifests: context.Manifests{
+					Kubernetes: config.Kubernetes{
+						Manifests: config.Manifests{
 							URLs: []string{
 								"https://k8s.io/examples/application/nginx-app.yaml",
 							},
 						},
-						Helm: context.Helm{
-							Charts: []context.HelmChart{
+						Helm: config.Helm{
+							Charts: []config.HelmChart{
 								{
 									Name:           "apache",
 									RepositoryName: "apache-repo",
@@ -75,10 +75,10 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Image Defined",
-			ctx: &context.Context{
+			ctx: &config.Context{
 				Definition: &image.Definition{
-					EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
-						ContainerImages: []context.ContainerImage{
+					EmbeddedArtifactRegistry: config.EmbeddedArtifactRegistry{
+						ContainerImages: []config.ContainerImage{
 							{
 								Name: "nginx",
 							},
@@ -90,10 +90,10 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Manifest URL Defined",
-			ctx: &context.Context{
+			ctx: &config.Context{
 				Definition: &image.Definition{
-					Kubernetes: context.Kubernetes{
-						Manifests: context.Manifests{
+					Kubernetes: config.Kubernetes{
+						Manifests: config.Manifests{
 							URLs: []string{
 								"https://k8s.io/examples/application/nginx-app.yaml",
 							},
@@ -105,11 +105,11 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Helm Charts Defined",
-			ctx: &context.Context{
+			ctx: &config.Context{
 				Definition: &image.Definition{
-					Kubernetes: context.Kubernetes{
-						Helm: context.Helm{
-							Charts: []context.HelmChart{
+					Kubernetes: config.Kubernetes{
+						Helm: config.Helm{
+							Charts: []config.HelmChart{
 								{
 									Name:           "apache",
 									RepositoryName: "apache-repo",
@@ -124,10 +124,10 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "None Defined",
-			ctx: &context.Context{
+			ctx: &config.Context{
 				Definition: &image.Definition{
-					EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{},
-					Kubernetes:               context.Kubernetes{},
+					EmbeddedArtifactRegistry: config.EmbeddedArtifactRegistry{},
+					Kubernetes:               config.Kubernetes{},
 				},
 			},
 			isConfigured: false,

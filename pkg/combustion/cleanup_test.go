@@ -1,13 +1,13 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
 func TestConfigureCleanupRaw(t *testing.T) {
@@ -15,7 +15,7 @@ func TestConfigureCleanupRaw(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Image.ImageType = context.TypeRAW
+	def.Image.ImageType = config.TypeRAW
 	ctx.Definition = def
 
 	// Test
@@ -38,7 +38,7 @@ func TestConfigureCleanupISO(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.Image.ImageType = context.TypeISO
+	def.Image.ImageType = config.TypeISO
 	ctx.Definition = def
 
 	// Test

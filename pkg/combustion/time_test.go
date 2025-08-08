@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,11 +15,11 @@ import (
 
 func TestConfigureTime_NoConf(t *testing.T) {
 	// Setup
-	var ctx context.Context
+	var ctx config.Context
 
 	ctx.Definition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
-			Time: context.Time{},
+			Time: config.Time{},
 		},
 	}
 
@@ -37,9 +37,9 @@ func TestConfigureTime_FullConfiguration(t *testing.T) {
 	defer teardown()
 
 	def.OperatingSystem = image.OperatingSystem{
-		Time: context.Time{
+		Time: config.Time{
 			Timezone: "Europe/London",
-			NtpConfiguration: context.NtpConfiguration{
+			NtpConfiguration: config.NtpConfiguration{
 				Pools:     []string{"2.suse.pool.ntp.org"},
 				Servers:   []string{"10.0.0.1", "10.0.0.2"},
 				ForceWait: true,

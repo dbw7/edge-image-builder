@@ -2,7 +2,7 @@ package combustion
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupOsFilesConfigDir(t *testing.T, empty bool) (ctx *context.Context, teardown func()) {
+func setupOsFilesConfigDir(t *testing.T, empty bool) (ctx *config.Context, teardown func()) {
 	ctx, _, teardown = setupContext(t)
 
 	testOsFilesDir := filepath.Join(ctx.ImageConfigDir, osFilesConfigDir)

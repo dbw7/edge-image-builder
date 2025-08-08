@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +21,7 @@ const (
 //go:embed templates/08-proxy-setup.sh.tpl
 var proxyScript string
 
-func configureProxy(ctx *context.Context) ([]string, error) {
+func configureProxy(ctx *config.Context) ([]string, error) {
 	proxy := ctx.Definition.GetOperatingSystem().GetProxy()
 	if proxy.HTTPProxy == "" && proxy.HTTPSProxy == "" {
 		log.AuditComponentSkipped(proxyComponentName)
@@ -37,7 +37,7 @@ func configureProxy(ctx *context.Context) ([]string, error) {
 	return []string{proxyScriptName}, nil
 }
 
-func writeProxyCombustionScript(ctx *context.Context) error {
+func writeProxyCombustionScript(ctx *config.Context) error {
 	proxyScriptFilename := filepath.Join(ctx.CombustionDir, proxyScriptName)
 
 	values := struct {

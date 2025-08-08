@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	"gopkg.in/yaml.v3"
 )
@@ -23,9 +23,9 @@ const (
 	ociScheme    = "oci"
 )
 
-var validNodeTypes = []string{context.KubernetesNodeTypeServer, context.KubernetesNodeTypeAgent}
+var validNodeTypes = []string{config.KubernetesNodeTypeServer, config.KubernetesNodeTypeAgent}
 
-func validateKubernetes(ctx *context.Context) []FailedValidation {
+func validateKubernetes(ctx *config.Context) []FailedValidation {
 	k8s := ctx.Definition.GetKubernetes()
 
 	var failures []FailedValidation
@@ -44,11 +44,11 @@ func validateKubernetes(ctx *context.Context) []FailedValidation {
 	return failures
 }
 
-func isKubernetesDefined(k8s *context.Kubernetes) bool {
+func isKubernetesDefined(k8s *config.Kubernetes) bool {
 	return k8s.Version != ""
 }
 
-func validateNodes(k8s *context.Kubernetes) []FailedValidation {
+func validateNodes(k8s *config.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
 
 	numNodes := len(k8s.Nodes)
@@ -59,7 +59,7 @@ func validateNodes(k8s *context.Kubernetes) []FailedValidation {
 
 	var nodeTypes []string
 	var nodeNames []string
-	var initialisers []*context.Node
+	var initialisers []*config.Node
 
 	for _, node := range k8s.Nodes {
 		if node.Hostname == "" {
@@ -68,7 +68,7 @@ func validateNodes(k8s *context.Kubernetes) []FailedValidation {
 			})
 		}
 
-		if node.Type != context.KubernetesNodeTypeServer && node.Type != context.KubernetesNodeTypeAgent {
+		if node.Type != config.KubernetesNodeTypeServer && node.Type != config.KubernetesNodeTypeAgent {
 			options := strings.Join(validNodeTypes, ", ")
 			msg := fmt.Sprintf("The 'type' field for entries in the 'nodes' section must be one of: %s", options)
 			failures = append(failures, FailedValidation{
@@ -80,8 +80,8 @@ func validateNodes(k8s *context.Kubernetes) []FailedValidation {
 			n := node
 			initialisers = append(initialisers, &n)
 
-			if node.Type == context.KubernetesNodeTypeAgent {
-				msg := fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", context.KubernetesNodeTypeServer)
+			if node.Type == config.KubernetesNodeTypeAgent {
+				msg := fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", config.KubernetesNodeTypeServer)
 				failures = append(failures, FailedValidation{
 					UserMessage: msg,
 				})
@@ -100,8 +100,8 @@ func validateNodes(k8s *context.Kubernetes) []FailedValidation {
 		})
 	}
 
-	if !slices.Contains(nodeTypes, context.KubernetesNodeTypeServer) {
-		msg := fmt.Sprintf("There must be at least one node of type '%s' defined.", context.KubernetesNodeTypeServer)
+	if !slices.Contains(nodeTypes, config.KubernetesNodeTypeServer) {
+		msg := fmt.Sprintf("There must be at least one node of type '%s' defined.", config.KubernetesNodeTypeServer)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
@@ -116,7 +116,7 @@ func validateNodes(k8s *context.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateNetwork(k8s *context.Kubernetes) []FailedValidation {
+func validateNetwork(k8s *config.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
 
 	if k8s.Network.APIVIP4 == "" && k8s.Network.APIVIP6 == "" {
@@ -182,7 +182,7 @@ func validateNetwork(k8s *context.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateNetworkingConfig(k8s *context.Kubernetes, kubernetesConfigPath string) []FailedValidation {
+func validateNetworkingConfig(k8s *config.Kubernetes, kubernetesConfigPath string) []FailedValidation {
 	var failures []FailedValidation
 
 	configFile, err := os.ReadFile(kubernetesConfigPath)
@@ -217,7 +217,7 @@ func validateNetworkingConfig(k8s *context.Kubernetes, kubernetesConfigPath stri
 	return failures
 }
 
-func validateCIDRConfig(k8s *context.Kubernetes, serverConfig map[string]any) []FailedValidation {
+func validateCIDRConfig(k8s *config.Kubernetes, serverConfig map[string]any) []FailedValidation {
 	var failures []FailedValidation
 
 	clusterCIDRs := parseCIDRs(serverConfig, "cluster-cidr")
@@ -251,7 +251,7 @@ func parseCIDRs(serverConfig map[string]any, cidrField string) []string {
 	return nil
 }
 
-func validateCIDRs(k8s *context.Kubernetes, cidrs []string, configField string) (isIPv6Priority *bool, failures []FailedValidation) {
+func validateCIDRs(k8s *config.Kubernetes, cidrs []string, configField string) (isIPv6Priority *bool, failures []FailedValidation) {
 	switch {
 	case isDualStackConfigured(k8s) && len(cidrs) != 2:
 		failures = append(failures, FailedValidation{
@@ -303,7 +303,7 @@ func validateCIDRs(k8s *context.Kubernetes, cidrs []string, configField string) 
 	return &ipv6Priority, failures
 }
 
-func validateNodeIP(k8s *context.Kubernetes, serverConfig map[string]any) []FailedValidation {
+func validateNodeIP(k8s *config.Kubernetes, serverConfig map[string]any) []FailedValidation {
 	var failures []FailedValidation
 
 	configField := "node-ip"
@@ -372,7 +372,7 @@ func validateIP(ip string, configField string, parseAddress func(ip string) (net
 	return addr, failures
 }
 
-func validateManifestURLs(k8s *context.Kubernetes) []FailedValidation {
+func validateManifestURLs(k8s *config.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
 
 	if len(k8s.Manifests.URLs) == 0 {
@@ -400,7 +400,7 @@ func validateManifestURLs(k8s *context.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateHelm(k8s *context.Kubernetes, valuesDir, certsDir string) []FailedValidation {
+func validateHelm(k8s *config.Kubernetes, valuesDir, certsDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if len(k8s.Helm.Charts) == 0 {
@@ -437,7 +437,7 @@ func validateHelm(k8s *context.Kubernetes, valuesDir, certsDir string) []FailedV
 	return failures
 }
 
-func validateChart(chart *context.HelmChart, repositoryNames []string, valuesDir string) []FailedValidation {
+func validateChart(chart *config.HelmChart, repositoryNames []string, valuesDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if chart.Name == "" {
@@ -473,7 +473,7 @@ func validateChart(chart *context.HelmChart, repositoryNames []string, valuesDir
 	return failures
 }
 
-func validateRepo(repo *context.HelmRepository, seenHelmRepos map[string]bool, certsDir string) []FailedValidation {
+func validateRepo(repo *config.HelmRepository, seenHelmRepos map[string]bool, certsDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	parsedURL, err := url.Parse(repo.URL)
@@ -495,7 +495,7 @@ func validateRepo(repo *context.HelmRepository, seenHelmRepos map[string]bool, c
 	return failures
 }
 
-func validateHelmRepoName(repo *context.HelmRepository, seenHelmRepos map[string]bool) []FailedValidation {
+func validateHelmRepoName(repo *config.HelmRepository, seenHelmRepos map[string]bool) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.Name == "" {
@@ -511,7 +511,7 @@ func validateHelmRepoName(repo *context.HelmRepository, seenHelmRepos map[string
 	return failures
 }
 
-func validateHelmRepoURL(parsedURL *url.URL, repo *context.HelmRepository) []FailedValidation {
+func validateHelmRepoURL(parsedURL *url.URL, repo *config.HelmRepository) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.URL == "" {
@@ -527,7 +527,7 @@ func validateHelmRepoURL(parsedURL *url.URL, repo *context.HelmRepository) []Fai
 	return failures
 }
 
-func validateHelmRepoAuth(repo *context.HelmRepository) []FailedValidation {
+func validateHelmRepoAuth(repo *config.HelmRepository) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.Authentication.Username != "" && repo.Authentication.Password == "" {
@@ -545,7 +545,7 @@ func validateHelmRepoAuth(repo *context.HelmRepository) []FailedValidation {
 	return failures
 }
 
-func validateHelmRepoArgs(parsedURL *url.URL, repo *context.HelmRepository) []FailedValidation {
+func validateHelmRepoArgs(parsedURL *url.URL, repo *config.HelmRepository) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.SkipTLSVerify && repo.PlainHTTP {
@@ -659,7 +659,7 @@ func validateHelmChartValues(chartName, valuesFile, valuesDir string) []FailedVa
 	return failures
 }
 
-func validateHelmChartDuplicates(charts []context.HelmChart) []FailedValidation {
+func validateHelmChartDuplicates(charts []config.HelmChart) []FailedValidation {
 	var failures []FailedValidation
 
 	seenHelmCharts := make(map[string]bool)
@@ -684,7 +684,7 @@ func validateHelmChartDuplicates(charts []context.HelmChart) []FailedValidation 
 	return failures
 }
 
-func validateAdditionalArtifacts(ctx *context.Context) []FailedValidation {
+func validateAdditionalArtifacts(ctx *config.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	dirEntries, err := os.ReadDir(combustion.KubernetesManifestsPath(ctx))
@@ -715,6 +715,6 @@ func validateAdditionalArtifacts(ctx *context.Context) []FailedValidation {
 	return failures
 }
 
-func isDualStackConfigured(k8s *context.Kubernetes) bool {
+func isDualStackConfigured(k8s *config.Kubernetes) bool {
 	return k8s.Network.APIVIP4 != "" && k8s.Network.APIVIP6 != ""
 }

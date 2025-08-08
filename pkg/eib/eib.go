@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 
 	"github.com/suse-edge/edge-image-builder/pkg/podman"
@@ -29,7 +29,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Run(ctx *context.Context, rootBuildDir string) error {
+func Run(ctx *config.Context, rootBuildDir string) error {
 	if err := appendKubernetesSELinuxRPMs(ctx); err != nil {
 		log.Auditf("Bootstrapping dependency services failed.")
 		return fmt.Errorf("configuring kubernetes selinux policy: %w", err)
@@ -49,18 +49,18 @@ func Run(ctx *context.Context, rootBuildDir string) error {
 	return builder.Build()
 }
 
-func appendKubernetesSELinuxRPMs(ctx *context.Context) error {
+func appendKubernetesSELinuxRPMs(ctx *config.Context) error {
 	if ctx.Definition.GetKubernetes().Version == "" {
 		return nil
 	}
 
 	configPath := combustion.KubernetesConfigPath(ctx)
-	config, err := kubernetes.ParseKubernetesConfig(configPath)
+	kubernetesConfig, err := kubernetes.ParseKubernetesConfig(configPath)
 	if err != nil {
 		return fmt.Errorf("parsing kubernetes server config: %w", err)
 	}
 
-	selinuxEnabled, _ := config["selinux"].(bool)
+	selinuxEnabled, _ := kubernetesConfig["selinux"].(bool)
 	if !selinuxEnabled {
 		return nil
 	}
@@ -78,7 +78,7 @@ func appendKubernetesSELinuxRPMs(ctx *context.Context) error {
 		return fmt.Errorf("identifying selinux repository: %w", err)
 	}
 
-	appendRPMs(ctx, []context.AddRepo{repository}, selinuxPackage)
+	appendRPMs(ctx, []config.AddRepo{repository}, selinuxPackage)
 
 	gpgKeysDir := combustion.GPGKeysPath(ctx)
 	if err = os.MkdirAll(gpgKeysDir, os.ModePerm); err != nil {
@@ -92,7 +92,7 @@ func appendKubernetesSELinuxRPMs(ctx *context.Context) error {
 	return nil
 }
 
-func appendElementalRPMs(ctx *context.Context) {
+func appendElementalRPMs(ctx *config.Context) {
 	elementalDir := combustion.ElementalPath(ctx)
 	if _, err := os.Stat(elementalDir); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
@@ -116,7 +116,7 @@ func appendElementalRPMs(ctx *context.Context) {
 	}
 }
 
-func appendFIPS(ctx *context.Context) {
+func appendFIPS(ctx *config.Context) {
 	fips := ctx.Definition.GetOperatingSystem().GetEnableFIPS()
 	if fips {
 		log.AuditInfo("FIPS mode is configured. The necessary RPM packages will be downloaded.")
@@ -132,7 +132,7 @@ func appendFIPS(ctx *context.Context) {
 	}
 }
 
-func appendRPMs(ctx *context.Context, repos []context.AddRepo, packages ...string) {
+func appendRPMs(ctx *config.Context, repos []config.AddRepo, packages ...string) {
 	repositories := ctx.Definition.GetOperatingSystem().GetPackages().AdditionalRepos
 	repositories = append(repositories, repos...)
 
@@ -141,7 +141,7 @@ func appendRPMs(ctx *context.Context, repos []context.AddRepo, packages ...strin
 
 	def := &image.Definition{
 		OperatingSystem: image.OperatingSystem{
-			Packages: context.Packages{
+			Packages: config.Packages{
 				PKGList:         packageList,
 				AdditionalRepos: repositories,
 			},
@@ -151,7 +151,7 @@ func appendRPMs(ctx *context.Context, repos []context.AddRepo, packages ...strin
 	ctx.Definition = def
 }
 
-func appendHelm(ctx *context.Context) {
+func appendHelm(ctx *config.Context) {
 	componentCharts, componentRepos := combustion.ComponentHelmCharts(ctx)
 
 	k8s := ctx.Definition.GetKubernetes()
@@ -159,7 +159,7 @@ func appendHelm(ctx *context.Context) {
 	k8s.Helm.Repositories = append(k8s.Helm.Repositories, componentRepos...)
 }
 
-func appendKernelArgs(ctx *context.Context, kernelArgs ...string) {
+func appendKernelArgs(ctx *config.Context, kernelArgs ...string) {
 	os := ctx.Definition.GetOperatingSystem()
 
 	kernelArgList := os.GetKernelArgs()
@@ -168,7 +168,7 @@ func appendKernelArgs(ctx *context.Context, kernelArgs ...string) {
 	// TODO: Figure out a setter
 }
 
-func buildCombustion(ctx *context.Context, rootDir string) (*combustion.Combustion, error) {
+func buildCombustion(ctx *config.Context, rootDir string) (*combustion.Combustion, error) {
 	cacheDir := filepath.Join(rootDir, "cache")
 	if err := os.MkdirAll(cacheDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating a cache directory: %w", err)

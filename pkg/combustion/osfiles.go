@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -24,7 +24,7 @@ var (
 	osFilesScript string
 )
 
-func configureOSFiles(ctx *context.Context) ([]string, error) {
+func configureOSFiles(ctx *config.Context) ([]string, error) {
 	if !isComponentConfigured(ctx, osFilesConfigDir) {
 		log.AuditComponentSkipped(osFilesComponentName)
 		zap.S().Info("skipping os files component, no files provided")
@@ -45,7 +45,7 @@ func configureOSFiles(ctx *context.Context) ([]string, error) {
 	return []string{osFilesScriptName}, nil
 }
 
-func copyOSFiles(ctx *context.Context) error {
+func copyOSFiles(ctx *config.Context) error {
 	srcDirectory := filepath.Join(ctx.ImageConfigDir, osFilesConfigDir)
 	destDirectory := filepath.Join(ctx.CombustionDir, osFilesConfigDir)
 
@@ -66,7 +66,7 @@ func copyOSFiles(ctx *context.Context) error {
 	return nil
 }
 
-func writeOSFilesScript(ctx *context.Context) error {
+func writeOSFilesScript(ctx *config.Context) error {
 	osFilesScriptFilename := filepath.Join(ctx.CombustionDir, osFilesScriptName)
 
 	if err := os.WriteFile(osFilesScriptFilename, []byte(osFilesScript), fileio.ExecutablePerms); err != nil {

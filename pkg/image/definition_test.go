@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -108,7 +108,7 @@ func TestParse(t *testing.T) {
 		"libbpf0",
 	}
 	assert.Equal(t, expectedPKGList, pkgConfig.PKGList)
-	expectedAddRepos := []context.AddRepo{
+	expectedAddRepos := []config.AddRepo{
 		{
 			URL: "https://download.nvidia.com/suse/sle15sp5/",
 		},
@@ -126,7 +126,7 @@ func TestParse(t *testing.T) {
 
 	// Operating System -> rawConfiguration
 	diskSize := definition.GetOperatingSystem().GetRawConfiguration().DiskSize
-	assert.Equal(t, context.DiskSize("32G"), diskSize)
+	assert.Equal(t, config.DiskSize("32G"), diskSize)
 
 	LUKSKey := definition.GetOperatingSystem().GetRawConfiguration().LUKSKey
 	assert.Equal(t, "1234", LUKSKey)
@@ -277,24 +277,24 @@ apiVersion: 10.0
 
 	_, err := ParseImageDefinition([]byte(badConfig))
 
-	require.ErrorIs(t, err, context.ErrorInvalidSchemaVersion)
+	require.ErrorIs(t, err, config.ErrorInvalidSchemaVersion)
 }
 
 func TestArch_Short(t *testing.T) {
-	assert.Equal(t, "amd64", context.ArchTypeX86.Short())
-	assert.Equal(t, "arm64", context.ArchTypeARM.Short())
+	assert.Equal(t, "amd64", config.ArchTypeX86.Short())
+	assert.Equal(t, "arm64", config.ArchTypeARM.Short())
 	assert.PanicsWithValue(t, "unknown arch: abc", func() {
-		arch := context.Arch("abc")
+		arch := config.Arch("abc")
 		arch.Short()
 	})
 }
 
 func TestDiskSize_ToMB(t *testing.T) {
-	assert.EqualValues(t, 50, context.DiskSize("50M").ToMB())
-	assert.EqualValues(t, 4096, context.DiskSize("4G").ToMB())
-	assert.EqualValues(t, 1024*1024, context.DiskSize("1T").ToMB())
+	assert.EqualValues(t, 50, config.DiskSize("50M").ToMB())
+	assert.EqualValues(t, 4096, config.DiskSize("4G").ToMB())
+	assert.EqualValues(t, 1024*1024, config.DiskSize("1T").ToMB())
 
 	assert.PanicsWithValue(t, "unknown disk size format", func() {
-		context.DiskSize("10K").ToMB()
+		config.DiskSize("10K").ToMB()
 	})
 }

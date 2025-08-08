@@ -1,7 +1,7 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,7 +18,7 @@ func TestConfigureSuma_NoConf(t *testing.T) {
 	defer teardown()
 
 	def.OperatingSystem = image.OperatingSystem{
-		Suma: context.Suma{},
+		Suma: config.Suma{},
 	}
 
 	ctx.Definition = def
@@ -37,7 +37,7 @@ func TestConfigureSuma_FullConfiguration(t *testing.T) {
 	defer teardown()
 
 	def.OperatingSystem = image.OperatingSystem{
-		Suma: context.Suma{
+		Suma: config.Suma{
 			Host:          "suma.edge.suse.com",
 			ActivationKey: "slemicro55",
 		},

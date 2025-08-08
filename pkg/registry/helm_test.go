@@ -2,7 +2,7 @@ package registry
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -13,27 +13,27 @@ import (
 )
 
 type mockHelmClient struct {
-	addRepoFunc       func(repository *context.HelmRepository) error
-	registryLoginFunc func(repository *context.HelmRepository) error
-	pullFunc          func(chart string, repository *context.HelmRepository, version, destDir string) (string, error)
+	addRepoFunc       func(repository *config.HelmRepository) error
+	registryLoginFunc func(repository *config.HelmRepository) error
+	pullFunc          func(chart string, repository *config.HelmRepository, version, destDir string) (string, error)
 	templateFunc      func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, apiVersions []string) ([]map[string]any, error)
 }
 
-func (m mockHelmClient) AddRepo(repository *context.HelmRepository) error {
+func (m mockHelmClient) AddRepo(repository *config.HelmRepository) error {
 	if m.addRepoFunc != nil {
 		return m.addRepoFunc(repository)
 	}
 	panic("not implemented")
 }
 
-func (m mockHelmClient) RegistryLogin(repository *context.HelmRepository) error {
+func (m mockHelmClient) RegistryLogin(repository *config.HelmRepository) error {
 	if m.registryLoginFunc != nil {
 		return m.registryLoginFunc(repository)
 	}
 	panic("not implemented")
 }
 
-func (m mockHelmClient) Pull(chart string, repository *context.HelmRepository, version, destDir string) (string, error) {
+func (m mockHelmClient) Pull(chart string, repository *config.HelmRepository, version, destDir string) (string, error) {
 	if m.pullFunc != nil {
 		return m.pullFunc(chart, repository, version, destDir)
 	}
@@ -59,7 +59,7 @@ func TestRegistry_HelmChartImages_TemplateError(t *testing.T) {
 	registry := Registry{
 		helmCharts: []*helmChart{
 			{
-				HelmChart: context.HelmChart{
+				HelmChart: config.HelmChart{
 					Name:           "apache",
 					RepositoryName: "apache-repo",
 					Version:        "10.7.0",
@@ -84,7 +84,7 @@ func TestRegistry_HelmChartImages(t *testing.T) {
 	registry := Registry{
 		helmCharts: []*helmChart{
 			{
-				HelmChart: context.HelmChart{
+				HelmChart: config.HelmChart{
 					Name:           "apache",
 					RepositoryName: "apache-repo",
 					Version:        "10.7.0",
@@ -120,13 +120,13 @@ func TestRegistry_HelmChartImages(t *testing.T) {
 }
 
 func TestDownloadChart_FailedAddingRepo(t *testing.T) {
-	helmChart := &context.HelmChart{}
-	helmRepo := &context.HelmRepository{
+	helmChart := &config.HelmChart{}
+	helmRepo := &config.HelmRepository{
 		URL: "https://suse-edge.github.io/charts",
 	}
 
 	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *context.HelmRepository) error {
+		addRepoFunc: func(repository *config.HelmRepository) error {
 			return fmt.Errorf("failed to add repo")
 		},
 	}
@@ -138,20 +138,20 @@ func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 }
 
 func TestDownloadChart_ValidRegistryLogin(t *testing.T) {
-	helmChart := &context.HelmChart{}
-	helmRepo := &context.HelmRepository{
+	helmChart := &config.HelmChart{}
+	helmRepo := &config.HelmRepository{
 		URL: "oci://registry-1.docker.io/bitnamicharts",
-		Authentication: context.HelmAuthentication{
+		Authentication: config.HelmAuthentication{
 			Username: "valid",
 			Password: "login",
 		},
 	}
 
 	helmClient := mockHelmClient{
-		registryLoginFunc: func(repository *context.HelmRepository) error {
+		registryLoginFunc: func(repository *config.HelmRepository) error {
 			return nil
 		},
-		pullFunc: func(chart string, repository *context.HelmRepository, version, destDir string) (string, error) {
+		pullFunc: func(chart string, repository *config.HelmRepository, version, destDir string) (string, error) {
 			return "apache-chart.tgz", nil
 		},
 	}
@@ -162,17 +162,17 @@ func TestDownloadChart_ValidRegistryLogin(t *testing.T) {
 }
 
 func TestDownloadChart_FailedRegistryLogin(t *testing.T) {
-	helmChart := &context.HelmChart{}
-	helmRepo := &context.HelmRepository{
+	helmChart := &config.HelmChart{}
+	helmRepo := &config.HelmRepository{
 		URL: "oci://registry-1.docker.io/bitnamicharts",
-		Authentication: context.HelmAuthentication{
+		Authentication: config.HelmAuthentication{
 			Username: "wrong",
 			Password: "creds",
 		},
 	}
 
 	helmClient := mockHelmClient{
-		registryLoginFunc: func(repository *context.HelmRepository) error {
+		registryLoginFunc: func(repository *config.HelmRepository) error {
 			return fmt.Errorf("wrong credentials")
 		},
 	}
@@ -184,16 +184,16 @@ func TestDownloadChart_FailedRegistryLogin(t *testing.T) {
 }
 
 func TestDownloadChart_FailedPulling(t *testing.T) {
-	helmChart := &context.HelmChart{}
-	helmRepo := &context.HelmRepository{
+	helmChart := &config.HelmChart{}
+	helmRepo := &config.HelmRepository{
 		URL: "https://suse-edge.github.io/charts",
 	}
 
 	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *context.HelmRepository) error {
+		addRepoFunc: func(repository *config.HelmRepository) error {
 			return nil
 		},
-		pullFunc: func(chart string, repository *context.HelmRepository, version, destDir string) (string, error) {
+		pullFunc: func(chart string, repository *config.HelmRepository, version, destDir string) (string, error) {
 			return "", fmt.Errorf("failed pulling chart")
 		},
 	}
@@ -205,21 +205,21 @@ func TestDownloadChart_FailedPulling(t *testing.T) {
 }
 
 func TestDownloadChart(t *testing.T) {
-	helmChart := &context.HelmChart{
+	helmChart := &config.HelmChart{
 		Name:           "apache",
 		RepositoryName: "apache-repo",
 		Version:        "10.7.0",
 	}
-	helmRepo := &context.HelmRepository{
+	helmRepo := &config.HelmRepository{
 		Name: "apache-repo",
 		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
 	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *context.HelmRepository) error {
+		addRepoFunc: func(repository *config.HelmRepository) error {
 			return nil
 		},
-		pullFunc: func(chart string, repository *context.HelmRepository, version, destDir string) (string, error) {
+		pullFunc: func(chart string, repository *config.HelmRepository, version, destDir string) (string, error) {
 			return "apache-chart.tgz", nil
 		},
 	}
@@ -245,7 +245,7 @@ func TestRegistry_HelmCharts(t *testing.T) {
 	registry := Registry{
 		helmCharts: []*helmChart{
 			{
-				HelmChart: context.HelmChart{
+				HelmChart: config.HelmChart{
 					Name:                  "apache",
 					RepositoryName:        "apache-repo",
 					Version:               "10.7.0",
@@ -284,7 +284,7 @@ func TestRegistry_HelmCharts_NonExistingChart(t *testing.T) {
 	registry := Registry{
 		helmCharts: []*helmChart{
 			{
-				HelmChart: context.HelmChart{
+				HelmChart: config.HelmChart{
 					Name:           "apache",
 					RepositoryName: "apache-repo",
 					Version:        "10.7.0",
@@ -314,7 +314,7 @@ func TestRegistry_HelmCharts_NonExistingValues(t *testing.T) {
 	registry := Registry{
 		helmCharts: []*helmChart{
 			{
-				HelmChart: context.HelmChart{
+				HelmChart: config.HelmChart{
 					Name:           "apache",
 					RepositoryName: "apache-repo",
 					Version:        "10.7.0",
@@ -333,8 +333,8 @@ func TestRegistry_HelmCharts_NonExistingValues(t *testing.T) {
 }
 
 func TestMapChartRepos(t *testing.T) {
-	helm := &context.Helm{
-		Charts: []context.HelmChart{
+	helm := &config.Helm{
+		Charts: []config.HelmChart{
 			{
 				Name:           "apache",
 				RepositoryName: "apache-repo",
@@ -346,7 +346,7 @@ func TestMapChartRepos(t *testing.T) {
 				Version:        "0.14.3",
 			},
 		},
-		Repositories: []context.HelmRepository{
+		Repositories: []config.HelmRepository{
 			{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -358,7 +358,7 @@ func TestMapChartRepos(t *testing.T) {
 		},
 	}
 
-	expectedMap := map[string]*context.HelmRepository{
+	expectedMap := map[string]*config.HelmRepository{
 		"apache-repo": {
 			Name: "apache-repo",
 			URL:  "oci://registry-1.docker.io/bitnamicharts",

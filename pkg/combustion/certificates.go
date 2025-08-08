@@ -3,10 +3,10 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
@@ -22,7 +22,7 @@ const (
 //go:embed templates/07-certificates.sh.tpl
 var certsScriptTemplate string
 
-func configureCertificates(ctx *context.Context) ([]string, error) {
+func configureCertificates(ctx *config.Context) ([]string, error) {
 	if !isComponentConfigured(ctx, certsConfigDir) {
 		log.AuditComponentSkipped(certsComponentName)
 		zap.S().Info("skipping certificate configuration, no certificates provided")
@@ -43,7 +43,7 @@ func configureCertificates(ctx *context.Context) ([]string, error) {
 	return []string{certsScriptName}, nil
 }
 
-func copyCertificates(ctx *context.Context) error {
+func copyCertificates(ctx *config.Context) error {
 	srcDir := filepath.Join(ctx.ImageConfigDir, certsConfigDir)
 	destDir := filepath.Join(ctx.CombustionDir, certsConfigDir)
 
@@ -71,7 +71,7 @@ func copyCertificates(ctx *context.Context) error {
 	return nil
 }
 
-func writeCertificatesScript(ctx *context.Context) error {
+func writeCertificatesScript(ctx *config.Context) error {
 	destFilename := filepath.Join(ctx.CombustionDir, certsScriptName)
 
 	values := struct {

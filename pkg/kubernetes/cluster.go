@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io/fs"
 	"net/netip"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -22,7 +22,7 @@ const (
 
 	tokenKey        = "token"
 	cniKey          = "cni"
-	cniDefaultValue = context.CNITypeCilium
+	cniDefaultValue = config.CNITypeCilium
 	serverKey       = "server"
 	tlsSANKey       = "tls-san"
 	disableKey      = "disable"
@@ -43,7 +43,7 @@ type Cluster struct {
 	AgentConfig map[string]any
 }
 
-func NewCluster(kubernetes *context.Kubernetes, configPath string) (*Cluster, error) {
+func NewCluster(kubernetes *config.Kubernetes, configPath string) (*Cluster, error) {
 	serverConfigPath := filepath.Join(configPath, serverConfigFile)
 	serverConfig, err := ParseKubernetesConfig(serverConfigPath)
 	if err != nil {
@@ -89,7 +89,7 @@ func NewCluster(kubernetes *context.Kubernetes, configPath string) (*Cluster, er
 	agentConfig[tokenKey] = serverConfig[tokenKey]
 	agentConfig[serverKey] = serverConfig[serverKey]
 	agentConfig[selinuxKey] = serverConfig[selinuxKey]
-	if strings.Contains(kubernetes.Version, context.KubernetesDistroRKE2) {
+	if strings.Contains(kubernetes.Version, config.KubernetesDistroRKE2) {
 		agentConfig[cniKey] = serverConfig[cniKey]
 	}
 
@@ -99,7 +99,7 @@ func NewCluster(kubernetes *context.Kubernetes, configPath string) (*Cluster, er
 		initialiserConfig[k] = v
 	}
 	delete(initialiserConfig, serverKey)
-	if strings.Contains(kubernetes.Version, context.KubernetesDistroK3S) {
+	if strings.Contains(kubernetes.Version, config.KubernetesDistroK3S) {
 		initialiserConfig[clusterInitKey] = true
 	}
 
@@ -133,7 +133,7 @@ func ParseKubernetesConfig(configFile string) (map[string]any, error) {
 	return config, nil
 }
 
-func identifyInitialiserNode(kubernetes *context.Kubernetes) string {
+func identifyInitialiserNode(kubernetes *config.Kubernetes) string {
 	for _, node := range kubernetes.Nodes {
 		if node.Initialiser {
 			return node.Hostname
@@ -142,7 +142,7 @@ func identifyInitialiserNode(kubernetes *context.Kubernetes) string {
 
 	// Use the first server node as an initialiser
 	for _, node := range kubernetes.Nodes {
-		if node.Type == context.KubernetesNodeTypeServer {
+		if node.Type == config.KubernetesNodeTypeServer {
 			zap.S().Infof("Using '%s' as the cluster initialiser, as one wasn't explicitly selected", node.Hostname)
 			return node.Hostname
 		}
@@ -151,58 +151,58 @@ func identifyInitialiserNode(kubernetes *context.Kubernetes) string {
 	return ""
 }
 
-func setSingleNodeConfigDefaults(kubernetes *context.Kubernetes, config map[string]any) {
-	if strings.Contains(kubernetes.Version, context.KubernetesDistroRKE2) {
-		setClusterCNI(config)
+func setSingleNodeConfigDefaults(kubernetes *config.Kubernetes, configValues map[string]any) {
+	if strings.Contains(kubernetes.Version, config.KubernetesDistroRKE2) {
+		setClusterCNI(configValues)
 	}
 	if kubernetes.Network.APIVIP4 != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
+		appendClusterTLSSAN(configValues, kubernetes.Network.APIVIP4)
 
-		if strings.Contains(kubernetes.Version, context.KubernetesDistroK3S) {
-			appendDisabledServices(config, "servicelb")
+		if strings.Contains(kubernetes.Version, config.KubernetesDistroK3S) {
+			appendDisabledServices(configValues, "servicelb")
 		}
 	}
 
 	if kubernetes.Network.APIVIP6 != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
+		appendClusterTLSSAN(configValues, kubernetes.Network.APIVIP6)
 
-		if strings.Contains(kubernetes.Version, context.KubernetesDistroK3S) && kubernetes.Network.APIVIP4 == "" {
-			appendDisabledServices(config, "servicelb")
+		if strings.Contains(kubernetes.Version, config.KubernetesDistroK3S) && kubernetes.Network.APIVIP4 == "" {
+			appendDisabledServices(configValues, "servicelb")
 		}
 	}
 
 	if kubernetes.Network.APIHost != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIHost)
+		appendClusterTLSSAN(configValues, kubernetes.Network.APIHost)
 	}
-	delete(config, serverKey)
+	delete(configValues, serverKey)
 }
 
-func setMultiNodeConfigDefaults(kubernetes *context.Kubernetes, config map[string]any, ip4 netip.Addr, ip6 netip.Addr, prioritizeIPv6 bool) {
+func setMultiNodeConfigDefaults(kubernetes *config.Kubernetes, configValues map[string]any, ip4 netip.Addr, ip6 netip.Addr, prioritizeIPv6 bool) {
 	const (
 		k3sServerPort  = 6443
 		rke2ServerPort = 9345
 	)
 
-	if strings.Contains(kubernetes.Version, context.KubernetesDistroRKE2) {
-		setClusterAPIAddress(config, ip4, ip6, rke2ServerPort, prioritizeIPv6)
-		setClusterCNI(config)
+	if strings.Contains(kubernetes.Version, config.KubernetesDistroRKE2) {
+		setClusterAPIAddress(configValues, ip4, ip6, rke2ServerPort, prioritizeIPv6)
+		setClusterCNI(configValues)
 	} else {
-		setClusterAPIAddress(config, ip4, ip6, k3sServerPort, prioritizeIPv6)
-		appendDisabledServices(config, "servicelb")
+		setClusterAPIAddress(configValues, ip4, ip6, k3sServerPort, prioritizeIPv6)
+		appendDisabledServices(configValues, "servicelb")
 	}
 
-	setClusterToken(config)
+	setClusterToken(configValues)
 	if kubernetes.Network.APIVIP4 != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
+		appendClusterTLSSAN(configValues, kubernetes.Network.APIVIP4)
 	}
 
 	if kubernetes.Network.APIVIP6 != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
+		appendClusterTLSSAN(configValues, kubernetes.Network.APIVIP6)
 	}
 
-	setSELinux(config)
+	setSELinux(configValues)
 	if kubernetes.Network.APIHost != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIHost)
+		appendClusterTLSSAN(configValues, kubernetes.Network.APIHost)
 	}
 }
 
@@ -314,11 +314,11 @@ func appendDisabledServices(config map[string]any, service string) {
 	}
 }
 
-func ServersCount(nodes []context.Node) int {
+func ServersCount(nodes []config.Node) int {
 	var servers int
 
 	for _, node := range nodes {
-		if node.Type == context.KubernetesNodeTypeServer {
+		if node.Type == config.KubernetesNodeTypeServer {
 			servers++
 		}
 	}

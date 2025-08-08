@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -49,7 +49,7 @@ var configureNetworkScript string
 //	│   └── host_config.yaml
 //	├── nmc
 //	└── 05-configure-network.sh
-func (c *Combustion) configureNetwork(ctx *context.Context) (scripts []string, err error) {
+func (c *Combustion) configureNetwork(ctx *config.Context) (scripts []string, err error) {
 	zap.S().Info("Configuring network component...")
 
 	if !isComponentConfigured(ctx, networkConfigDir) {
@@ -99,7 +99,7 @@ func (c *Combustion) configureNetwork(ctx *context.Context) (scripts []string, e
 	return scripts, nil
 }
 
-func (c *Combustion) generateNetworkConfig(ctx *context.Context) error {
+func (c *Combustion) generateNetworkConfig(ctx *config.Context) error {
 	const networkConfigLogFile = "network-config.log"
 
 	logFilename := filepath.Join(ctx.BuildDir, networkConfigLogFile)
@@ -120,7 +120,7 @@ func (c *Combustion) generateNetworkConfig(ctx *context.Context) error {
 	return c.NetworkConfigGenerator.GenerateNetworkConfig(configDir, outputDir, logFile)
 }
 
-func (c *Combustion) installNetworkConfigurator(ctx *context.Context) error {
+func (c *Combustion) installNetworkConfigurator(ctx *config.Context) error {
 	sourcePath := "/usr/bin/nmc"
 	installPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
 

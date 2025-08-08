@@ -1,7 +1,7 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,7 +18,7 @@ func TestConfigureUsers(t *testing.T) {
 	defer teardown()
 
 	def.OperatingSystem = image.OperatingSystem{
-		Users: []context.OperatingSystemUser{
+		Users: []config.OperatingSystemUser{
 			{
 				Username:          "alpha",
 				UID:               2000,

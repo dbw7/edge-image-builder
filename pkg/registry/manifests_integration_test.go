@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -34,11 +34,11 @@ func TestManifestImages(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(buildDir))
 	}()
 
-	ctx := &context.Context{
+	ctx := &config.Context{
 		BuildDir: buildDir,
 		Definition: &image.Definition{
-			Kubernetes: context.Kubernetes{
-				Manifests: context.Manifests{
+			Kubernetes: config.Kubernetes{
+				Manifests: config.Manifests{
 					URLs: []string{"https://k8s.io/examples/application/nginx-app.yaml"},
 				},
 			},

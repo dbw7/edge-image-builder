@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -20,7 +20,7 @@ const (
 //go:embed templates/11-time-setup.sh.tpl
 var timeScript string
 
-func configureTime(ctx *context.Context) ([]string, error) {
+func configureTime(ctx *config.Context) ([]string, error) {
 	time := ctx.Definition.GetOperatingSystem().GetTime()
 	if time.Timezone == "" {
 		log.AuditComponentSkipped(timeComponentName)
@@ -36,7 +36,7 @@ func configureTime(ctx *context.Context) ([]string, error) {
 	return []string{timeScriptName}, nil
 }
 
-func writeTimeCombustionScript(ctx *context.Context) error {
+func writeTimeCombustionScript(ctx *config.Context) error {
 	timeScriptFilename := filepath.Join(ctx.CombustionDir, timeScriptName)
 
 	values := struct {

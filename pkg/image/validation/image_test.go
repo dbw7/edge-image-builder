@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -32,9 +32,9 @@ func TestValidateImage(t *testing.T) {
 	}{
 		`complete valid definition`: {
 			ImageDefinition: image.Definition{
-				Image: context.Image{
-					ImageType:       context.TypeISO,
-					Arch:            context.ArchTypeX86,
+				Image: config.Image{
+					ImageType:       config.TypeISO,
+					Arch:            config.ArchTypeX86,
 					BaseImage:       "base-image.iso",
 					OutputImageName: "eib-created.iso",
 				},
@@ -42,7 +42,7 @@ func TestValidateImage(t *testing.T) {
 		},
 		`missing all fields`: {
 			ImageDefinition: image.Definition{
-				Image: context.Image{},
+				Image: config.Image{},
 			},
 			ExpectedFailedMessages: []string{
 				"The 'imageType' field is required in the 'image' section.",
@@ -53,7 +53,7 @@ func TestValidateImage(t *testing.T) {
 		},
 		`invalid enum values`: {
 			ImageDefinition: image.Definition{
-				Image: context.Image{
+				Image: config.Image{
 					ImageType:       "foo",
 					Arch:            "bar",
 					BaseImage:       "base-image.iso",
@@ -67,9 +67,9 @@ func TestValidateImage(t *testing.T) {
 		},
 		`base image not found`: {
 			ImageDefinition: image.Definition{
-				Image: context.Image{
-					ImageType:       context.TypeISO,
-					Arch:            context.ArchTypeX86,
+				Image: config.Image{
+					ImageType:       config.TypeISO,
+					Arch:            config.ArchTypeX86,
 					BaseImage:       "not-there",
 					OutputImageName: "eib-created.iso",
 				},
@@ -83,7 +83,7 @@ func TestValidateImage(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			imageDef := test.ImageDefinition
-			ctx := context.Context{
+			ctx := config.Context{
 				ImageConfigDir: imageConfigDir,
 				Definition:     &imageDef,
 			}

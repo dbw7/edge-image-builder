@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -33,9 +33,9 @@ func TestValidateDefinition(t *testing.T) {
 		`minimal valid`: {
 			Definition: image.Definition{
 				APIVersion: "1.2",
-				Image: context.Image{
+				Image: config.Image{
 					ImageType:       "iso",
-					Arch:            context.ArchTypeX86,
+					Arch:            config.ArchTypeX86,
 					BaseImage:       fakeBaseImageName,
 					OutputImageName: "output.iso",
 				},
@@ -44,31 +44,31 @@ func TestValidateDefinition(t *testing.T) {
 		`invalid in each`: {
 			Definition: image.Definition{
 				APIVersion: "1.2",
-				Image: context.Image{
-					Arch:            context.ArchTypeX86,
+				Image: config.Image{
+					Arch:            config.ArchTypeX86,
 					BaseImage:       fakeBaseImageName,
 					OutputImageName: "output.iso",
 				},
 				OperatingSystem: image.OperatingSystem{
 					KernelArgs: []string{"foo=", "fips=1"},
 				},
-				EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
-					ContainerImages: []context.ContainerImage{
+				EmbeddedArtifactRegistry: config.EmbeddedArtifactRegistry{
+					ContainerImages: []config.ContainerImage{
 						{
 							Name: "", // trips the missing name validation
 						},
 					},
 				},
-				Kubernetes: context.Kubernetes{
-					Network: context.Network{},
-					Nodes: []context.Node{
+				Kubernetes: config.Kubernetes{
+					Network: config.Network{},
+					Nodes: []config.Node{
 						{
 							Hostname: "host1",
-							Type:     context.KubernetesNodeTypeServer,
+							Type:     config.KubernetesNodeTypeServer,
 						},
 						{
 							Hostname: "host2",
-							Type:     context.KubernetesNodeTypeAgent,
+							Type:     config.KubernetesNodeTypeAgent,
 						},
 					},
 				},
@@ -95,7 +95,7 @@ func TestValidateDefinition(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			def := test.Definition
-			ctx := context.Context{
+			ctx := config.Context{
 				Definition:     &def,
 				ImageConfigDir: configDir,
 			}

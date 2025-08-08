@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
@@ -17,10 +17,10 @@ const (
 	imageComponent = "Image"
 )
 
-func validateImage(ctx *context.Context) []FailedValidation {
+func validateImage(ctx *config.Context) []FailedValidation {
 	def := ctx.Definition.(*image.Definition) // TODO: drop type cast
 
-	validImageTypes := []string{context.TypeISO, context.TypeRAW}
+	validImageTypes := []string{config.TypeISO, config.TypeRAW}
 
 	var failures []FailedValidation
 
@@ -72,7 +72,7 @@ func validateImage(ctx *context.Context) []FailedValidation {
 func validateArch(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	validArchTypes := []string{string(context.ArchTypeARM), string(context.ArchTypeX86)}
+	validArchTypes := []string{string(config.ArchTypeARM), string(config.ArchTypeX86)}
 	if def.Image.Arch == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The 'arch' field is required in the 'image' section.",

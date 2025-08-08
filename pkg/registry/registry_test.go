@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,13 +21,13 @@ func TestRegistry_New_InvalidManifestURL(t *testing.T) {
 	}()
 
 	def := &image.Definition{
-		Kubernetes: context.Kubernetes{
-			Manifests: context.Manifests{
+		Kubernetes: config.Kubernetes{
+			Manifests: config.Manifests{
 				URLs: []string{"k8s.io/examples/application/nginx-app.yaml"}},
 		},
 	}
 
-	ctx := &context.Context{
+	ctx := &config.Context{
 		BuildDir:   buildDir,
 		Definition: def,
 	}
@@ -49,7 +49,7 @@ func TestRegistry_ContainerImages(t *testing.T) {
 	require.NoError(t, fileio.CopyFile("testdata/sample-crd.yaml", filepath.Join(manifestsDir, "sample-crd.yaml"), fileio.NonExecutablePerms))
 
 	registry := Registry{
-		embeddedImages: []context.ContainerImage{
+		embeddedImages: []config.ContainerImage{
 			{
 				Name: "hello-world",
 			},
@@ -60,7 +60,7 @@ func TestRegistry_ContainerImages(t *testing.T) {
 		manifestsDir: manifestsDir,
 		helmCharts: []*helmChart{
 			{
-				HelmChart: context.HelmChart{
+				HelmChart: config.HelmChart{
 					Name: "apache",
 				},
 			},
@@ -99,7 +99,7 @@ func TestRegistry_ContainerImages(t *testing.T) {
 }
 
 func TestDeduplicateContainerImages(t *testing.T) {
-	embeddedImages := []context.ContainerImage{
+	embeddedImages := []config.ContainerImage{
 		{
 			Name: "hello-world:latest",
 		},

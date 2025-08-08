@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -21,7 +21,7 @@ const (
 //go:embed templates/48-message.sh.tpl
 var messageScript string
 
-func configureMessage(ctx *context.Context) ([]string, error) {
+func configureMessage(ctx *config.Context) ([]string, error) {
 	values := struct {
 		Version string
 	}{

@@ -9,16 +9,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 type mockRPMResolver struct {
-	resolveFunc func(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error)
+	resolveFunc func(packages *config.Packages, localRPMConfig *config.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error)
 }
 
-func (m mockRPMResolver) Resolve(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
+func (m mockRPMResolver) Resolve(packages *config.Packages, localRPMConfig *config.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 	if m.resolveFunc != nil {
 		return m.resolveFunc(packages, localRPMConfig, outputDir)
 	}
@@ -44,15 +44,15 @@ func TestSkipRPMComponent_InvalidDefinition(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		packages context.Packages
+		packages config.Packages
 	}{
 		{
 			name: "No RPM directory or package list",
 		},
 		{
 			name: "Additional repository without an RPM directory or package list",
-			packages: context.Packages{
-				AdditionalRepos: []context.AddRepo{
+			packages: config.Packages{
+				AdditionalRepos: []config.AddRepo{
 					{
 						URL: "https://foo.bar",
 					},
@@ -61,8 +61,8 @@ func TestSkipRPMComponent_InvalidDefinition(t *testing.T) {
 		},
 		{
 			name: "Additional repository and registration code without RPM directory or package list",
-			packages: context.Packages{
-				AdditionalRepos: []context.AddRepo{
+			packages: config.Packages{
+				AdditionalRepos: []config.AddRepo{
 					{
 						URL: "https://foo.bar",
 					},
@@ -87,7 +87,7 @@ func TestSkipRPMComponent_PopulatedPackageList(t *testing.T) {
 	defer teardown()
 
 	def.OperatingSystem = image.OperatingSystem{
-		Packages: context.Packages{
+		Packages: config.Packages{
 			PKGList: []string{"pkg1", "pkg2"},
 		},
 	}
@@ -120,9 +120,9 @@ func TestSkipRPMComponent_FullConfig(t *testing.T) {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
 
-	def.OperatingSystem.Packages = context.Packages{
+	def.OperatingSystem.Packages = config.Packages{
 		PKGList: []string{"pkg1", "pkg2"},
-		AdditionalRepos: []context.AddRepo{
+		AdditionalRepos: []config.AddRepo{
 			{
 				URL: "https://foo.bar",
 			},
@@ -152,9 +152,9 @@ func TestConfigureRPMs_ResolutionFailures(t *testing.T) {
 	defer teardown()
 
 	// do not skip RPM component
-	def.OperatingSystem.Packages = context.Packages{
+	def.OperatingSystem.Packages = config.Packages{
 		PKGList: []string{"foo", "bar"},
-		AdditionalRepos: []context.AddRepo{
+		AdditionalRepos: []config.AddRepo{
 			{
 				URL: "https://foo.bar",
 			},
@@ -171,7 +171,7 @@ func TestConfigureRPMs_ResolutionFailures(t *testing.T) {
 		{
 			name: "Resolving RPM dependencies fails",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *config.Packages, localRPMConfig *config.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "", nil, fmt.Errorf("resolution failed")
 				},
 			},
@@ -180,7 +180,7 @@ func TestConfigureRPMs_ResolutionFailures(t *testing.T) {
 		{
 			name: "Creating RPM repository fails",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *config.Packages, localRPMConfig *config.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "rpm-repo", []string{"foo", "bar"}, nil
 				},
 			},
@@ -194,7 +194,7 @@ func TestConfigureRPMs_ResolutionFailures(t *testing.T) {
 		{
 			name: "Writing RPM script with empty package list",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *config.Packages, localRPMConfig *config.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "rpm-repo", []string{}, nil
 				},
 			},
@@ -208,7 +208,7 @@ func TestConfigureRPMs_ResolutionFailures(t *testing.T) {
 		{
 			name: "Writing RPM script with empty repo path",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *config.Packages, localRPMConfig *config.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "", []string{"foo", "bar"}, nil
 				},
 			},
@@ -250,13 +250,13 @@ func TestConfigureRPMs_GPGFailures(t *testing.T) {
 	tests := []struct {
 		name         string
 		expectedErr  string
-		pkgs         context.Packages
+		pkgs         config.Packages
 		createGPGDir bool
 	}{
 		{
 			name:         "Disabled GPG validation, but existing GPG dir",
 			createGPGDir: true,
-			pkgs: context.Packages{
+			pkgs: config.Packages{
 				NoGPGCheck: true,
 			},
 			expectedErr: "fetching local RPM config: found existing 'gpg-keys' directory, but GPG validation is disabled",
@@ -268,7 +268,7 @@ func TestConfigureRPMs_GPGFailures(t *testing.T) {
 		},
 		{
 			name:        "Enabled GPG validation, but missing GPG dir",
-			pkgs:        context.Packages{},
+			pkgs:        config.Packages{},
 			expectedErr: "fetching local RPM config: GPG validation is enabled, but 'gpg-keys' directory is missing for side-loaded RPMs",
 		},
 	}
@@ -302,9 +302,9 @@ func TestConfigureRPMs_SuccessfulConfig(t *testing.T) {
 	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	def.OperatingSystem.Packages = context.Packages{
+	def.OperatingSystem.Packages = config.Packages{
 		PKGList: []string{"foo", "bar"},
-		AdditionalRepos: []context.AddRepo{
+		AdditionalRepos: []config.AddRepo{
 			{
 				URL: "https://foo.bar",
 			},
@@ -331,7 +331,7 @@ func TestConfigureRPMs_SuccessfulConfig(t *testing.T) {
 			},
 		},
 		RPMResolver: mockRPMResolver{
-			resolveFunc: func(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (string, []string, error) {
+			resolveFunc: func(packages *config.Packages, localRPMConfig *config.LocalRPMConfig, outputDir string) (string, []string, error) {
 				if localRPMConfig == nil {
 					return "", nil, fmt.Errorf("local rpm config is nil")
 				}

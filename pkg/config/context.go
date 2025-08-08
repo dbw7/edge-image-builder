@@ -1,4 +1,4 @@
-package context
+package config
 
 type LocalRPMConfig struct {
 	// RPMPath is the path to the directory holding RPMs that will be side-loaded

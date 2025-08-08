@@ -3,7 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"os"
 	"path/filepath"
 
@@ -20,7 +20,7 @@ const (
 //go:embed templates/14-systemd.sh.tpl
 var systemdTemplate string
 
-func configureSystemd(ctx *context.Context) ([]string, error) {
+func configureSystemd(ctx *config.Context) ([]string, error) {
 	// Nothing to do if both lists are empty
 	systemd := ctx.Definition.GetOperatingSystem().GetSystemd()
 	if len(systemd.Enable) == 0 && len(systemd.Disable) == 0 {
