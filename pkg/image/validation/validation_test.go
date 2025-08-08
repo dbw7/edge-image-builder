@@ -1,13 +1,13 @@
 package validation
 
 import (
-	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -33,9 +33,9 @@ func TestValidateDefinition(t *testing.T) {
 		`minimal valid`: {
 			Definition: image.Definition{
 				APIVersion: "1.2",
-				Image: image.Image{
+				Image: context.Image{
 					ImageType:       "iso",
-					Arch:            image.ArchTypeX86,
+					Arch:            context.ArchTypeX86,
 					BaseImage:       fakeBaseImageName,
 					OutputImageName: "output.iso",
 				},
@@ -44,31 +44,31 @@ func TestValidateDefinition(t *testing.T) {
 		`invalid in each`: {
 			Definition: image.Definition{
 				APIVersion: "1.2",
-				Image: image.Image{
-					Arch:            image.ArchTypeX86,
+				Image: context.Image{
+					Arch:            context.ArchTypeX86,
 					BaseImage:       fakeBaseImageName,
 					OutputImageName: "output.iso",
 				},
 				OperatingSystem: image.OperatingSystem{
 					KernelArgs: []string{"foo=", "fips=1"},
 				},
-				EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
-					ContainerImages: []image.ContainerImage{
+				EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
+					ContainerImages: []context.ContainerImage{
 						{
 							Name: "", // trips the missing name validation
 						},
 					},
 				},
-				Kubernetes: image.Kubernetes{
-					Network: image.Network{},
-					Nodes: []image.Node{
+				Kubernetes: context.Kubernetes{
+					Network: context.Network{},
+					Nodes: []context.Node{
 						{
 							Hostname: "host1",
-							Type:     image.KubernetesNodeTypeServer,
+							Type:     context.KubernetesNodeTypeServer,
 						},
 						{
 							Hostname: "host2",
-							Type:     image.KubernetesNodeTypeAgent,
+							Type:     context.KubernetesNodeTypeAgent,
 						},
 					},
 				},
@@ -96,8 +96,8 @@ func TestValidateDefinition(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			def := test.Definition
 			ctx := context.Context{
-				ImageDefinition: &def,
-				ImageConfigDir:  configDir,
+				Definition:     &def,
+				ImageConfigDir: configDir,
 			}
 			failures := ValidateDefinition(&ctx)
 

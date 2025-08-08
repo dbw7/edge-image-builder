@@ -3,13 +3,13 @@ package build
 import (
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
@@ -70,7 +70,7 @@ func Run(_ *cli.Context) error {
 		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
 	}
 
-	ctx := context.BuildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, *imageDefinition, artifactSources)
+	ctx := context.BuildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition, artifactSources)
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
@@ -110,7 +110,7 @@ func imageConfigDirExists(configDir string) *cmd.Error {
 	}
 }
 
-func parseImageDefinition(configDir, definitionFile string) (*context.Definition, *cmd.Error) {
+func parseImageDefinition(configDir, definitionFile string) (*image.Definition, *cmd.Error) {
 	definitionFilePath := filepath.Join(configDir, definitionFile)
 
 	configData, err := os.ReadFile(definitionFilePath)
@@ -144,7 +144,7 @@ func parseImageDefinition(configDir, definitionFile string) (*context.Definition
 		}
 	}
 
-	return &imageDefinition, nil
+	return imageDefinition, nil
 }
 
 func parseArtifactSources() (*context.ArtifactSources, error) {

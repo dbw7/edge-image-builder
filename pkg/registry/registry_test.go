@@ -1,10 +1,11 @@
 package registry
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,12 +20,12 @@ func TestRegistry_New_InvalidManifestURL(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(buildDir))
 	}()
 
-	def := &image.ImageDefinitionAdapter{Definition: &image.Definition{
+	def := &image.Definition{
 		Kubernetes: context.Kubernetes{
 			Manifests: context.Manifests{
 				URLs: []string{"k8s.io/examples/application/nginx-app.yaml"}},
 		},
-	}}
+	}
 
 	ctx := &context.Context{
 		BuildDir:   buildDir,

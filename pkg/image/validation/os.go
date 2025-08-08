@@ -2,10 +2,10 @@ package validation
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/context"
 	"slices"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -14,7 +14,7 @@ const (
 )
 
 func validateOperatingSystem(ctx *context.Context) []FailedValidation {
-	def := ctx.ImageDefinition
+	def := ctx.Definition.(*image.Definition)
 
 	var failures []FailedValidation
 
@@ -164,7 +164,7 @@ func validateUsers(os *image.OperatingSystem) []FailedValidation {
 func validateSuma(os *image.OperatingSystem) []FailedValidation {
 	var failures []FailedValidation
 
-	if os.Suma == (image.Suma{}) {
+	if os.Suma == (context.Suma{}) {
 		return failures
 	}
 	if os.Suma.Host == "" {
@@ -234,8 +234,8 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 func validateIsoConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	if !strings.EqualFold(def.Image.ImageType, image.TypeISO) && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
-		msg := fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
+	if !strings.EqualFold(def.Image.ImageType, context.TypeISO) && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
+		msg := fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", context.TypeISO)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
@@ -247,23 +247,23 @@ func validateIsoConfig(def *image.Definition) []FailedValidation {
 func validateRawConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	if strings.EqualFold(def.Image.ImageType, image.TypeISO) {
+	if strings.EqualFold(def.Image.ImageType, context.TypeISO) {
 		if def.OperatingSystem.RawConfiguration.LUKSKey != "" {
-			msg := fmt.Sprintf("The 'luksKey' field should only be defined for '%s' encrypted images.", image.TypeRAW)
+			msg := fmt.Sprintf("The 'luksKey' field should only be defined for '%s' encrypted images.", context.TypeRAW)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
 			})
 		}
 
 		if def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
-			msg := fmt.Sprintf("The 'expandEncryptedPartition' field can only be defined for '%s' encrypted images.", image.TypeRAW)
+			msg := fmt.Sprintf("The 'expandEncryptedPartition' field can only be defined for '%s' encrypted images.", context.TypeRAW)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
 			})
 		}
 
 		if def.OperatingSystem.RawConfiguration.DiskSize != "" {
-			msg := fmt.Sprintf("The 'diskSize' field can only be defined for '%s' images.", image.TypeRAW)
+			msg := fmt.Sprintf("The 'diskSize' field can only be defined for '%s' images.", context.TypeRAW)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
 			})

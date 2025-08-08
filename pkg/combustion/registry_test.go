@@ -1,10 +1,11 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,28 +45,26 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		{
 			name: "Everything Defined",
 			ctx: &context.Context{
-				Definition: &image.ImageDefinitionAdapter{
-					&image.Definition{
-						EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
-							ContainerImages: []context.ContainerImage{
-								{
-									Name: "nginx",
-								},
+				Definition: &image.Definition{
+					EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
+						ContainerImages: []context.ContainerImage{
+							{
+								Name: "nginx",
 							},
 						},
-						Kubernetes: context.Kubernetes{
-							Manifests: context.Manifests{
-								URLs: []string{
-									"https://k8s.io/examples/application/nginx-app.yaml",
-								},
+					},
+					Kubernetes: context.Kubernetes{
+						Manifests: context.Manifests{
+							URLs: []string{
+								"https://k8s.io/examples/application/nginx-app.yaml",
 							},
-							Helm: context.Helm{
-								Charts: []context.HelmChart{
-									{
-										Name:           "apache",
-										RepositoryName: "apache-repo",
-										Version:        "10.7.0",
-									},
+						},
+						Helm: context.Helm{
+							Charts: []context.HelmChart{
+								{
+									Name:           "apache",
+									RepositoryName: "apache-repo",
+									Version:        "10.7.0",
 								},
 							},
 						},
@@ -77,13 +76,11 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		{
 			name: "Image Defined",
 			ctx: &context.Context{
-				Definition: &image.ImageDefinitionAdapter{
-					&image.Definition{
-						EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
-							ContainerImages: []context.ContainerImage{
-								{
-									Name: "nginx",
-								},
+				Definition: &image.Definition{
+					EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
+						ContainerImages: []context.ContainerImage{
+							{
+								Name: "nginx",
 							},
 						},
 					},
@@ -94,13 +91,11 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		{
 			name: "Manifest URL Defined",
 			ctx: &context.Context{
-				Definition: &image.ImageDefinitionAdapter{
-					&image.Definition{
-						Kubernetes: context.Kubernetes{
-							Manifests: context.Manifests{
-								URLs: []string{
-									"https://k8s.io/examples/application/nginx-app.yaml",
-								},
+				Definition: &image.Definition{
+					Kubernetes: context.Kubernetes{
+						Manifests: context.Manifests{
+							URLs: []string{
+								"https://k8s.io/examples/application/nginx-app.yaml",
 							},
 						},
 					},
@@ -111,16 +106,14 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		{
 			name: "Helm Charts Defined",
 			ctx: &context.Context{
-				Definition: &image.ImageDefinitionAdapter{
-					&image.Definition{
-						Kubernetes: context.Kubernetes{
-							Helm: context.Helm{
-								Charts: []context.HelmChart{
-									{
-										Name:           "apache",
-										RepositoryName: "apache-repo",
-										Version:        "10.7.0",
-									},
+				Definition: &image.Definition{
+					Kubernetes: context.Kubernetes{
+						Helm: context.Helm{
+							Charts: []context.HelmChart{
+								{
+									Name:           "apache",
+									RepositoryName: "apache-repo",
+									Version:        "10.7.0",
 								},
 							},
 						},
@@ -132,11 +125,9 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		{
 			name: "None Defined",
 			ctx: &context.Context{
-				Definition: &image.ImageDefinitionAdapter{
-					&image.Definition{
-						EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{},
-						Kubernetes:               context.Kubernetes{},
-					},
+				Definition: &image.Definition{
+					EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{},
+					Kubernetes:               context.Kubernetes{},
 				},
 			},
 			isConfigured: false,

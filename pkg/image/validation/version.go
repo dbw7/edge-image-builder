@@ -2,9 +2,10 @@ package validation
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/context"
 	"reflect"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
 const (
@@ -36,10 +37,10 @@ var definitionFields = map[string][]imageDefinitionField{
 
 func validateVersion(ctx *context.Context) []FailedValidation {
 	var failures []FailedValidation
-	var rootValue = reflect.ValueOf(ctx.ImageDefinition)
+	var rootValue = reflect.ValueOf(ctx.Definition)
 
 	for apiVersion, fields := range definitionFields {
-		if strings.Compare(ctx.ImageDefinition.APIVersion, apiVersion) >= 0 {
+		if strings.Compare(ctx.Definition.GetAPIVersion(), apiVersion) >= 0 {
 			continue
 		}
 

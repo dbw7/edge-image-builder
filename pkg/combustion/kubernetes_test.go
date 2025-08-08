@@ -2,13 +2,13 @@ package combustion
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
@@ -89,7 +89,7 @@ func (m mockEmbeddedRegistry) ManifestsPath() string {
 
 func TestConfigureKubernetes_Skipped(t *testing.T) {
 	ctx := &context.Context{
-		Definition: &image.ImageDefinitionAdapter{Definition: &image.Definition{}},
+		Definition: &image.Definition{},
 	}
 
 	var c Combustion
@@ -101,11 +101,9 @@ func TestConfigureKubernetes_Skipped(t *testing.T) {
 
 func TestConfigureKubernetes_UnsupportedVersion(t *testing.T) {
 	ctx := &context.Context{
-		Definition: &image.ImageDefinitionAdapter{
-			Definition: &image.Definition{
-				Kubernetes: context.Kubernetes{
-					Version: "v1.30.3",
-				},
+		Definition: &image.Definition{
+			Kubernetes: context.Kubernetes{
+				Version: "v1.30.3",
 			},
 		},
 	}

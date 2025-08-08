@@ -3,7 +3,6 @@ package validation
 import (
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/context"
 	"net/netip"
 	"net/url"
 	"os"
@@ -12,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	"gopkg.in/yaml.v3"
 )
@@ -24,32 +23,32 @@ const (
 	ociScheme    = "oci"
 )
 
-var validNodeTypes = []string{image.KubernetesNodeTypeServer, image.KubernetesNodeTypeAgent}
+var validNodeTypes = []string{context.KubernetesNodeTypeServer, context.KubernetesNodeTypeAgent}
 
 func validateKubernetes(ctx *context.Context) []FailedValidation {
-	def := ctx.ImageDefinition
+	k8s := ctx.Definition.GetKubernetes()
 
 	var failures []FailedValidation
 
-	if !isKubernetesDefined(&def.Kubernetes) {
+	if !isKubernetesDefined(k8s) {
 		failures = append(failures, validateAdditionalArtifacts(ctx)...)
 		return failures
 	}
 
-	failures = append(failures, validateNetworkingConfig(&def.Kubernetes, combustion.KubernetesConfigPath(ctx))...)
-	failures = append(failures, validateNetwork(&def.Kubernetes)...)
-	failures = append(failures, validateNodes(&def.Kubernetes)...)
-	failures = append(failures, validateManifestURLs(&def.Kubernetes)...)
-	failures = append(failures, validateHelm(&def.Kubernetes, combustion.HelmValuesPath(ctx), combustion.HelmCertsPath(ctx))...)
+	failures = append(failures, validateNetworkingConfig(k8s, combustion.KubernetesConfigPath(ctx))...)
+	failures = append(failures, validateNetwork(k8s)...)
+	failures = append(failures, validateNodes(k8s)...)
+	failures = append(failures, validateManifestURLs(k8s)...)
+	failures = append(failures, validateHelm(k8s, combustion.HelmValuesPath(ctx), combustion.HelmCertsPath(ctx))...)
 
 	return failures
 }
 
-func isKubernetesDefined(k8s *image.Kubernetes) bool {
+func isKubernetesDefined(k8s *context.Kubernetes) bool {
 	return k8s.Version != ""
 }
 
-func validateNodes(k8s *image.Kubernetes) []FailedValidation {
+func validateNodes(k8s *context.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
 
 	numNodes := len(k8s.Nodes)
@@ -60,7 +59,7 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 
 	var nodeTypes []string
 	var nodeNames []string
-	var initialisers []*image.Node
+	var initialisers []*context.Node
 
 	for _, node := range k8s.Nodes {
 		if node.Hostname == "" {
@@ -69,7 +68,7 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 			})
 		}
 
-		if node.Type != image.KubernetesNodeTypeServer && node.Type != image.KubernetesNodeTypeAgent {
+		if node.Type != context.KubernetesNodeTypeServer && node.Type != context.KubernetesNodeTypeAgent {
 			options := strings.Join(validNodeTypes, ", ")
 			msg := fmt.Sprintf("The 'type' field for entries in the 'nodes' section must be one of: %s", options)
 			failures = append(failures, FailedValidation{
@@ -81,8 +80,8 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 			n := node
 			initialisers = append(initialisers, &n)
 
-			if node.Type == image.KubernetesNodeTypeAgent {
-				msg := fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", image.KubernetesNodeTypeServer)
+			if node.Type == context.KubernetesNodeTypeAgent {
+				msg := fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", context.KubernetesNodeTypeServer)
 				failures = append(failures, FailedValidation{
 					UserMessage: msg,
 				})
@@ -101,8 +100,8 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		})
 	}
 
-	if !slices.Contains(nodeTypes, image.KubernetesNodeTypeServer) {
-		msg := fmt.Sprintf("There must be at least one node of type '%s' defined.", image.KubernetesNodeTypeServer)
+	if !slices.Contains(nodeTypes, context.KubernetesNodeTypeServer) {
+		msg := fmt.Sprintf("There must be at least one node of type '%s' defined.", context.KubernetesNodeTypeServer)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
@@ -117,7 +116,7 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
+func validateNetwork(k8s *context.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
 
 	if k8s.Network.APIVIP4 == "" && k8s.Network.APIVIP6 == "" {
@@ -183,7 +182,7 @@ func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateNetworkingConfig(k8s *image.Kubernetes, kubernetesConfigPath string) []FailedValidation {
+func validateNetworkingConfig(k8s *context.Kubernetes, kubernetesConfigPath string) []FailedValidation {
 	var failures []FailedValidation
 
 	configFile, err := os.ReadFile(kubernetesConfigPath)
@@ -218,7 +217,7 @@ func validateNetworkingConfig(k8s *image.Kubernetes, kubernetesConfigPath string
 	return failures
 }
 
-func validateCIDRConfig(k8s *image.Kubernetes, serverConfig map[string]any) []FailedValidation {
+func validateCIDRConfig(k8s *context.Kubernetes, serverConfig map[string]any) []FailedValidation {
 	var failures []FailedValidation
 
 	clusterCIDRs := parseCIDRs(serverConfig, "cluster-cidr")
@@ -252,7 +251,7 @@ func parseCIDRs(serverConfig map[string]any, cidrField string) []string {
 	return nil
 }
 
-func validateCIDRs(k8s *image.Kubernetes, cidrs []string, configField string) (isIPv6Priority *bool, failures []FailedValidation) {
+func validateCIDRs(k8s *context.Kubernetes, cidrs []string, configField string) (isIPv6Priority *bool, failures []FailedValidation) {
 	switch {
 	case isDualStackConfigured(k8s) && len(cidrs) != 2:
 		failures = append(failures, FailedValidation{
@@ -304,7 +303,7 @@ func validateCIDRs(k8s *image.Kubernetes, cidrs []string, configField string) (i
 	return &ipv6Priority, failures
 }
 
-func validateNodeIP(k8s *image.Kubernetes, serverConfig map[string]any) []FailedValidation {
+func validateNodeIP(k8s *context.Kubernetes, serverConfig map[string]any) []FailedValidation {
 	var failures []FailedValidation
 
 	configField := "node-ip"
@@ -373,7 +372,7 @@ func validateIP(ip string, configField string, parseAddress func(ip string) (net
 	return addr, failures
 }
 
-func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
+func validateManifestURLs(k8s *context.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
 
 	if len(k8s.Manifests.URLs) == 0 {
@@ -401,7 +400,7 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateHelm(k8s *image.Kubernetes, valuesDir, certsDir string) []FailedValidation {
+func validateHelm(k8s *context.Kubernetes, valuesDir, certsDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if len(k8s.Helm.Charts) == 0 {
@@ -438,7 +437,7 @@ func validateHelm(k8s *image.Kubernetes, valuesDir, certsDir string) []FailedVal
 	return failures
 }
 
-func validateChart(chart *image.HelmChart, repositoryNames []string, valuesDir string) []FailedValidation {
+func validateChart(chart *context.HelmChart, repositoryNames []string, valuesDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if chart.Name == "" {
@@ -474,7 +473,7 @@ func validateChart(chart *image.HelmChart, repositoryNames []string, valuesDir s
 	return failures
 }
 
-func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool, certsDir string) []FailedValidation {
+func validateRepo(repo *context.HelmRepository, seenHelmRepos map[string]bool, certsDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	parsedURL, err := url.Parse(repo.URL)
@@ -496,7 +495,7 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool, cer
 	return failures
 }
 
-func validateHelmRepoName(repo *image.HelmRepository, seenHelmRepos map[string]bool) []FailedValidation {
+func validateHelmRepoName(repo *context.HelmRepository, seenHelmRepos map[string]bool) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.Name == "" {
@@ -512,7 +511,7 @@ func validateHelmRepoName(repo *image.HelmRepository, seenHelmRepos map[string]b
 	return failures
 }
 
-func validateHelmRepoURL(parsedURL *url.URL, repo *image.HelmRepository) []FailedValidation {
+func validateHelmRepoURL(parsedURL *url.URL, repo *context.HelmRepository) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.URL == "" {
@@ -528,7 +527,7 @@ func validateHelmRepoURL(parsedURL *url.URL, repo *image.HelmRepository) []Faile
 	return failures
 }
 
-func validateHelmRepoAuth(repo *image.HelmRepository) []FailedValidation {
+func validateHelmRepoAuth(repo *context.HelmRepository) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.Authentication.Username != "" && repo.Authentication.Password == "" {
@@ -546,7 +545,7 @@ func validateHelmRepoAuth(repo *image.HelmRepository) []FailedValidation {
 	return failures
 }
 
-func validateHelmRepoArgs(parsedURL *url.URL, repo *image.HelmRepository) []FailedValidation {
+func validateHelmRepoArgs(parsedURL *url.URL, repo *context.HelmRepository) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.SkipTLSVerify && repo.PlainHTTP {
@@ -660,7 +659,7 @@ func validateHelmChartValues(chartName, valuesFile, valuesDir string) []FailedVa
 	return failures
 }
 
-func validateHelmChartDuplicates(charts []image.HelmChart) []FailedValidation {
+func validateHelmChartDuplicates(charts []context.HelmChart) []FailedValidation {
 	var failures []FailedValidation
 
 	seenHelmCharts := make(map[string]bool)
@@ -702,12 +701,12 @@ func validateAdditionalArtifacts(ctx *context.Context) []FailedValidation {
 		})
 	}
 
-	if len(ctx.ImageDefinition.Kubernetes.Helm.Charts) != 0 {
+	if len(ctx.Definition.GetKubernetes().Helm.Charts) != 0 {
 		failures = append(failures, FailedValidation{
 			UserMessage: "Kubernetes version must be defined when Helm charts are specified",
 		})
 	}
-	if len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 {
+	if len(ctx.Definition.GetKubernetes().Manifests.URLs) != 0 {
 		failures = append(failures, FailedValidation{
 			UserMessage: "Kubernetes version must be defined when manifest URLs are specified",
 		})
@@ -716,6 +715,6 @@ func validateAdditionalArtifacts(ctx *context.Context) []FailedValidation {
 	return failures
 }
 
-func isDualStackConfigured(k8s *image.Kubernetes) bool {
+func isDualStackConfigured(k8s *context.Kubernetes) bool {
 	return k8s.Network.APIVIP4 != "" && k8s.Network.APIVIP6 != ""
 }

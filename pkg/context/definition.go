@@ -33,15 +33,14 @@ var (
 )
 
 type Definition interface {
-	APIVersion               string
-Kubernetes               Kubernetes
-EmbeddedArtifactRegistry EmbeddedArtifactRegistry
-
-GetImage() Image
-GetOperatingSystem() OperatingSystemInterface
+	GetAPIVersion() string
+	GetKubernetes() *Kubernetes
+	GetEmbeddedArtifactRegistry() EmbeddedArtifactRegistry
+	GetImage() Image
+	GetOperatingSystem() OperatingSystem
 }
 
-type OperatingSystemInterface interface {
+type OperatingSystem interface {
 	GetUsers() []OperatingSystemUser
 	GetGroups() []OperatingSystemGroup
 	GetSystemd() Systemd

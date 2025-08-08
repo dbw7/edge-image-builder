@@ -3,10 +3,11 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
@@ -58,7 +59,8 @@ var (
 )
 
 func (c *Combustion) configureKubernetes(ctx *context.Context) ([]string, error) {
-	version := ctx.Definition.GetKubernetes().Version
+	k8s := ctx.Definition.GetKubernetes()
+	version := k8s.Version
 
 	if version == "" {
 		log.AuditComponentSkipped(k8sComponentName)
@@ -75,7 +77,7 @@ func (c *Combustion) configureKubernetes(ctx *context.Context) ([]string, error)
 	// is usually taking longer to complete due to downloading files
 	log.Audit("Configuring Kubernetes component...")
 
-	if kubernetes.ServersCount(ctx.Definition.GetKubernetes().Nodes) == 2 {
+	if kubernetes.ServersCount(k8s.Nodes) == 2 {
 		log.Audit("WARNING: Kubernetes clusters consisting of two server nodes cannot form a highly available architecture")
 		zap.S().Warn("Kubernetes cluster of two server nodes has been requested")
 	}
@@ -83,7 +85,7 @@ func (c *Combustion) configureKubernetes(ctx *context.Context) ([]string, error)
 	configDir := generateComponentPath(ctx, k8sDir)
 	configPath := filepath.Join(configDir, k8sConfigDir)
 
-	cluster, err := kubernetes.NewCluster(ctx.Definition.GetKubernetes(), configPath)
+	cluster, err := kubernetes.NewCluster(k8s, configPath)
 	if err != nil {
 		log.AuditComponentFailed(k8sComponentName)
 		return nil, fmt.Errorf("initialising cluster config: %w", err)
@@ -424,12 +426,13 @@ func (c *Combustion) configureManifests(ctx *context.Context) (string, error) {
 	manifestsPath := localKubernetesManifestsPath()
 	manifestDestDir := filepath.Join(ctx.ArtefactsDir, manifestsPath)
 
-	if ctx.Definition.GetKubernetes().Network.APIVIP4 != "" || ctx.Definition.GetKubernetes().Network.APIVIP6 != "" {
+	k8s := ctx.Definition.GetKubernetes()
+	if k8s.Network.APIVIP4 != "" || k8s.Network.APIVIP6 != "" {
 		if err := os.MkdirAll(manifestDestDir, os.ModePerm); err != nil {
 			return "", fmt.Errorf("creating manifests destination dir: %w", err)
 		}
 
-		manifest, err := kubernetesVIPManifest(ctx.Definition.GetKubernetes())
+		manifest, err := kubernetesVIPManifest(k8s)
 		if err != nil {
 			return "", fmt.Errorf("parsing VIP manifest: %w", err)
 		}

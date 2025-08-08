@@ -1,13 +1,13 @@
 package validation
 
 import (
-	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -33,20 +33,20 @@ func TestValidateElemental(t *testing.T) {
 	require.NoError(t, os.WriteFile(validElementalConfig, []byte(""), 0o600))
 
 	tests := map[string]struct {
-		ImageDefinition        *image.Definition
+		Definition             *image.Definition
 		ExpectedFailedMessages []string
 	}{
 		`valid, registration code no side-loaded rpms`: {
-			ImageDefinition: &image.Definition{
+			Definition: &image.Definition{
 				OperatingSystem: image.OperatingSystem{
-					Packages: image.Packages{
+					Packages: context.Packages{
 						RegCode: "registration-code",
 					},
 				},
 			},
 		},
 		`invalid, no registration code no side-loaded rpms`: {
-			ImageDefinition: &image.Definition{},
+			Definition: &image.Definition{},
 			ExpectedFailedMessages: []string{
 				"Operating system package registration code field must be defined when using Elemental or the " +
 					"[elemental-register elemental-system-agent] RPMs must be manually side-loaded",
@@ -57,8 +57,8 @@ func TestValidateElemental(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx := context.Context{
-				ImageConfigDir:  configDir,
-				ImageDefinition: test.ImageDefinition,
+				ImageConfigDir: configDir,
+				Definition:     test.Definition,
 			}
 			failures := validateElemental(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
@@ -160,8 +160,8 @@ func TestValidateElementalConfigurationManualRPMsNoRegistrationCode(t *testing.T
 	}()
 
 	ctx := &context.Context{
-		ImageConfigDir:  configDir,
-		ImageDefinition: &image.Definition{},
+		ImageConfigDir: configDir,
+		Definition:     &image.Definition{},
 	}
 
 	elementalDir := filepath.Join(configDir, "elemental")
@@ -193,9 +193,9 @@ func TestValidateElementalConfigurationManualRPMsWithRegistrationCode(t *testing
 
 	ctx := &context.Context{
 		ImageConfigDir: configDir,
-		ImageDefinition: &image.Definition{
+		Definition: &image.Definition{
 			OperatingSystem: image.OperatingSystem{
-				Packages: image.Packages{
+				Packages: context.Packages{
 					RegCode: "registration-code",
 				},
 			},
@@ -230,8 +230,8 @@ func TestValidateElementalConfigurationManualRPMsMissingAgent(t *testing.T) {
 	}()
 
 	ctx := &context.Context{
-		ImageConfigDir:  configDir,
-		ImageDefinition: &image.Definition{},
+		ImageConfigDir: configDir,
+		Definition:     &image.Definition{},
 	}
 
 	elementalDir := filepath.Join(configDir, "elemental")
@@ -261,8 +261,8 @@ func TestValidateElementalConfigurationManualRPMsMissingRegister(t *testing.T) {
 	}()
 
 	ctx := &context.Context{
-		ImageConfigDir:  configDir,
-		ImageDefinition: &image.Definition{},
+		ImageConfigDir: configDir,
+		Definition:     &image.Definition{},
 	}
 
 	elementalDir := filepath.Join(configDir, "elemental")

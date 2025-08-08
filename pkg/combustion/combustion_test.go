@@ -1,17 +1,18 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setupContext(t *testing.T) (ctx *context.Context, def *image.ImageDefinitionAdapter, teardown func()) {
+func setupContext(t *testing.T) (ctx *context.Context, def *image.Definition, teardown func()) {
 	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
 
@@ -24,9 +25,7 @@ func setupContext(t *testing.T) (ctx *context.Context, def *image.ImageDefinitio
 	artefactsDir, err := os.MkdirTemp("", "eib-artefacts-")
 	require.NoError(t, err)
 
-	def = &image.ImageDefinitionAdapter{
-		Definition: &image.Definition{},
-	}
+	def = &image.Definition{}
 
 	ctx = &context.Context{
 		ImageConfigDir: configDir,

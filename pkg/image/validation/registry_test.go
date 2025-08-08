@@ -1,39 +1,39 @@
 package validation
 
 import (
-	"github.com/suse-edge/edge-image-builder/context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 	tests := map[string]struct {
-		Registry               image.EmbeddedArtifactRegistry
+		Registry               context.EmbeddedArtifactRegistry
 		ExpectedFailedMessages []string
 	}{
 		`no registry`: {
-			Registry: image.EmbeddedArtifactRegistry{},
+			Registry: context.EmbeddedArtifactRegistry{},
 		},
 		`full valid example`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
+			Registry: context.EmbeddedArtifactRegistry{
+				ContainerImages: []context.ContainerImage{
 					{
 						Name: "foo",
 					},
 				},
-				Registries: []image.Registry{
+				Registries: []context.Registry{
 					{
 						URI: "docker.io",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
 						},
 					},
 					{
 						URI: "192.168.1.100:5000",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "user2",
 							Password: "pass2",
 						},
@@ -42,8 +42,8 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 			},
 		},
 		`image definition failure`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
+			Registry: context.EmbeddedArtifactRegistry{
+				ContainerImages: []context.ContainerImage{
 					{
 						Name: "", // trips the missing name validation
 					},
@@ -59,7 +59,7 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ear := test.Registry
 			ctx := context.Context{
-				ImageDefinition: &image.Definition{
+				Definition: &image.Definition{
 					EmbeddedArtifactRegistry: ear,
 				},
 			}
@@ -80,15 +80,15 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 
 func TestValidateContainerImages(t *testing.T) {
 	tests := map[string]struct {
-		Registry               image.EmbeddedArtifactRegistry
+		Registry               context.EmbeddedArtifactRegistry
 		ExpectedFailedMessages []string
 	}{
 		`no images`: {
-			Registry: image.EmbeddedArtifactRegistry{},
+			Registry: context.EmbeddedArtifactRegistry{},
 		},
 		`missing name`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
+			Registry: context.EmbeddedArtifactRegistry{
+				ContainerImages: []context.ContainerImage{
 					{
 						Name: "valid",
 					},
@@ -102,8 +102,8 @@ func TestValidateContainerImages(t *testing.T) {
 			},
 		},
 		`duplicate name`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
+			Registry: context.EmbeddedArtifactRegistry{
+				ContainerImages: []context.ContainerImage{
 					{
 						Name: "foo",
 					},
@@ -148,18 +148,18 @@ func TestValidateContainerImages(t *testing.T) {
 
 func TestValidateRegistries(t *testing.T) {
 	tests := map[string]struct {
-		Registry               image.EmbeddedArtifactRegistry
+		Registry               context.EmbeddedArtifactRegistry
 		ExpectedFailedMessages []string
 	}{
 		`no authentication`: {
-			Registry: image.EmbeddedArtifactRegistry{},
+			Registry: context.EmbeddedArtifactRegistry{},
 		},
 		`URI no credentials`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				Registries: []image.Registry{
+			Registry: context.EmbeddedArtifactRegistry{
+				Registries: []context.Registry{
 					{
 						URI:            "docker.io",
-						Authentication: image.RegistryAuthentication{},
+						Authentication: context.RegistryAuthentication{},
 					},
 				},
 			},
@@ -169,11 +169,11 @@ func TestValidateRegistries(t *testing.T) {
 			},
 		},
 		`credentials missing username`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				Registries: []image.Registry{
+			Registry: context.EmbeddedArtifactRegistry{
+				Registries: []context.Registry{
 					{
 						URI: "docker.io",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "",
 							Password: "pass",
 						},
@@ -185,11 +185,11 @@ func TestValidateRegistries(t *testing.T) {
 			},
 		},
 		`credentials missing password`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				Registries: []image.Registry{
+			Registry: context.EmbeddedArtifactRegistry{
+				Registries: []context.Registry{
 					{
 						URI: "docker.io",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "user",
 							Password: "",
 						},
@@ -201,18 +201,18 @@ func TestValidateRegistries(t *testing.T) {
 			},
 		},
 		`credentials duplicate URI`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				Registries: []image.Registry{
+			Registry: context.EmbeddedArtifactRegistry{
+				Registries: []context.Registry{
 					{
 						URI: "docker.io",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
 						},
 					},
 					{
 						URI: "docker.io",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "user2",
 							Password: "pass2",
 						},
@@ -224,25 +224,25 @@ func TestValidateRegistries(t *testing.T) {
 			},
 		},
 		`invalid registry URI`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				Registries: []image.Registry{
+			Registry: context.EmbeddedArtifactRegistry{
+				Registries: []context.Registry{
 					{
 						URI: "docker...io",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
 						},
 					},
 					{
 						URI: "/docker.io/images",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
 						},
 					},
 					{
 						URI: "https://docker.io/images",
-						Authentication: image.RegistryAuthentication{
+						Authentication: context.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
 						},

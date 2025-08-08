@@ -2,11 +2,12 @@ package build
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +27,7 @@ func TestCreateRawImageCopyCommand(t *testing.T) {
 	builder := Builder{
 		context: &context.Context{
 			ImageConfigDir: "config-dir",
-			Definition:     &image.ImageDefinitionAdapter{Definition: def},
+			Definition:     def,
 		},
 	}
 
@@ -57,7 +58,7 @@ func TestWriteModifyScript(t *testing.T) {
 		},
 	}
 
-	ctx.Definition = &image.ImageDefinitionAdapter{Definition: def}
+	ctx.Definition = def
 
 	builder := Builder{context: ctx}
 	outputImageFilename := builder.generateOutputImageFilename()

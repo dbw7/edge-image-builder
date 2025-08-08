@@ -1,10 +1,11 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,11 +17,9 @@ func TestConfigureTime_NoConf(t *testing.T) {
 	// Setup
 	var ctx context.Context
 
-	ctx.Definition = &image.ImageDefinitionAdapter{
-		Definition: &image.Definition{
-			OperatingSystem: image.OperatingSystem{
-				Time: context.Time{},
-			},
+	ctx.Definition = &image.Definition{
+		OperatingSystem: image.OperatingSystem{
+			Time: context.Time{},
 		},
 	}
 

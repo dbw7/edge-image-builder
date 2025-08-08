@@ -2,10 +2,9 @@ package validation
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/context"
 
 	"github.com/containers/image/v5/docker/reference"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
 const (
@@ -15,13 +14,15 @@ const (
 func validateEmbeddedArtifactRegistry(ctx *context.Context) []FailedValidation {
 	var failures []FailedValidation
 
-	failures = append(failures, validateRegistries(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
-	failures = append(failures, validateContainerImages(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
+	registry := ctx.Definition.GetEmbeddedArtifactRegistry()
+
+	failures = append(failures, validateRegistries(&registry)...)
+	failures = append(failures, validateContainerImages(&registry)...)
 
 	return failures
 }
 
-func validateContainerImages(ear *image.EmbeddedArtifactRegistry) []FailedValidation {
+func validateContainerImages(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
 	var failures []FailedValidation
 
 	seenContainerImages := make(map[string]bool)
@@ -44,7 +45,7 @@ func validateContainerImages(ear *image.EmbeddedArtifactRegistry) []FailedValida
 	return failures
 }
 
-func validateRegistries(ear *image.EmbeddedArtifactRegistry) []FailedValidation {
+func validateRegistries(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
 	var failures []FailedValidation
 
 	failures = append(failures, validateURLs(ear)...)
@@ -53,7 +54,7 @@ func validateRegistries(ear *image.EmbeddedArtifactRegistry) []FailedValidation 
 	return failures
 }
 
-func validateURLs(ear *image.EmbeddedArtifactRegistry) []FailedValidation {
+func validateURLs(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
 	var failures []FailedValidation
 
 	seenRegistryURLs := make(map[string]bool)
@@ -87,7 +88,7 @@ func validateURLs(ear *image.EmbeddedArtifactRegistry) []FailedValidation {
 	return failures
 }
 
-func validateCredentials(ear *image.EmbeddedArtifactRegistry) []FailedValidation {
+func validateCredentials(ear *context.EmbeddedArtifactRegistry) []FailedValidation {
 	var failures []FailedValidation
 
 	for _, registry := range ear.Registries {

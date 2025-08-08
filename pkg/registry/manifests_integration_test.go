@@ -3,13 +3,13 @@
 package registry
 
 import (
-	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -36,9 +36,9 @@ func TestManifestImages(t *testing.T) {
 
 	ctx := &context.Context{
 		BuildDir: buildDir,
-		ImageDefinition: &image.Definition{
-			Kubernetes: image.Kubernetes{
-				Manifests: image.Manifests{
+		Definition: &image.Definition{
+			Kubernetes: context.Kubernetes{
+				Manifests: context.Manifests{
 					URLs: []string{"https://k8s.io/examples/application/nginx-app.yaml"},
 				},
 			},

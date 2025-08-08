@@ -2,21 +2,19 @@ package validation
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"gopkg.in/yaml.v3"
-
-	"github.com/stretchr/testify/require"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"gopkg.in/yaml.v3"
 )
 
-var validNetwork = image.Network{
+var validNetwork = context.Network{
 	APIHost: "host.com",
 	APIVIP4: "192.168.100.1",
 }
@@ -36,29 +34,29 @@ func TestValidateKubernetes(t *testing.T) {
 	require.NoError(t, os.WriteFile(apacheValuesPath, []byte(""), 0o600))
 
 	tests := map[string]struct {
-		K8s                    image.Kubernetes
+		K8s                    context.Kubernetes
 		ExpectedFailedMessages []string
 	}{
 		`not defined`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 		},
 		`all valid`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Version: "v1.30.3+k3s1",
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname:    "server",
-						Type:        image.KubernetesNodeTypeServer,
+						Type:        context.KubernetesNodeTypeServer,
 						Initialiser: true,
 					},
 					{
 						Hostname: "agent1",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 				},
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:                  "apache",
 							RepositoryName:        "apache-repo",
@@ -69,7 +67,7 @@ func TestValidateKubernetes(t *testing.T) {
 							ValuesFile:            "apache-values.yaml",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -79,37 +77,37 @@ func TestValidateKubernetes(t *testing.T) {
 			},
 		},
 		`failures all sections`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Version: "v1.30.3",
-				Network: image.Network{
+				Network: context.Network{
 					APIHost: "host.com",
 					APIVIP4: "127.0.0.1",
 					APIVIP6: "ff02::1",
 				},
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
-						Type:        image.KubernetesNodeTypeServer,
+						Type:        context.KubernetesNodeTypeServer,
 						Initialiser: true,
 					},
 					{
 						Hostname: "valid",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 				},
-				Manifests: image.Manifests{
+				Manifests: context.Manifests{
 					URLs: []string{
 						"example.com",
 					},
 				},
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "",
 							RepositoryName: "another-apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -134,7 +132,7 @@ func TestValidateKubernetes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ctx := context.Context{
 				ImageConfigDir: configDir,
-				ImageDefinition: &image.Definition{
+				Definition: &image.Definition{
 					Kubernetes: test.K8s,
 				},
 			}
@@ -155,56 +153,56 @@ func TestValidateKubernetes(t *testing.T) {
 }
 
 func TestIsKubernetesDefined(t *testing.T) {
-	result := isKubernetesDefined(&image.Kubernetes{
+	result := isKubernetesDefined(&context.Kubernetes{
 		Version: "v1.30.3+k3s1",
 	})
 	assert.True(t, result)
 
-	result = isKubernetesDefined(&image.Kubernetes{
-		Network:   image.Network{},
-		Nodes:     []image.Node{},
-		Manifests: image.Manifests{},
-		Helm:      image.Helm{},
+	result = isKubernetesDefined(&context.Kubernetes{
+		Network:   context.Network{},
+		Nodes:     []context.Node{},
+		Manifests: context.Manifests{},
+		Helm:      context.Helm{},
 	})
 	assert.False(t, result)
 }
 
 func TestValidateNodes(t *testing.T) {
 	tests := map[string]struct {
-		K8s                    image.Kubernetes
+		K8s                    context.Kubernetes
 		ExpectedFailedMessages []string
 	}{
 		`valid`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname: "agent1",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 					{
 						Hostname:    "server",
-						Type:        image.KubernetesNodeTypeServer,
+						Type:        context.KubernetesNodeTypeServer,
 						Initialiser: true,
 					},
 				},
 			},
 		},
 		`no nodes`: {
-			K8s: image.Kubernetes{
-				Nodes: []image.Node{},
+			K8s: context.Kubernetes{
+				Nodes: []context.Node{},
 			},
 		},
 		`no hostname`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname: "host1",
-						Type:     image.KubernetesNodeTypeServer,
+						Type:     context.KubernetesNodeTypeServer,
 					},
 					{
-						Type: image.KubernetesNodeTypeServer,
+						Type: context.KubernetesNodeTypeServer,
 					},
 				},
 			},
@@ -213,12 +211,12 @@ func TestValidateNodes(t *testing.T) {
 			},
 		},
 		`missing type`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname: "host1",
-						Type:     image.KubernetesNodeTypeServer,
+						Type:     context.KubernetesNodeTypeServer,
 					},
 					{
 						Hostname: "valid",
@@ -230,12 +228,12 @@ func TestValidateNodes(t *testing.T) {
 			},
 		},
 		`invalid type`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname: "valid",
-						Type:     image.KubernetesNodeTypeServer,
+						Type:     context.KubernetesNodeTypeServer,
 					},
 					{
 						Hostname: "invalid",
@@ -248,44 +246,44 @@ func TestValidateNodes(t *testing.T) {
 			},
 		},
 		`incorrect initialiser type`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname: "valid",
-						Type:     image.KubernetesNodeTypeServer,
+						Type:     context.KubernetesNodeTypeServer,
 					},
 					{
 						Hostname:    "invalid",
 						Initialiser: true,
-						Type:        image.KubernetesNodeTypeAgent,
+						Type:        context.KubernetesNodeTypeAgent,
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", image.KubernetesNodeTypeServer),
+				fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", context.KubernetesNodeTypeServer),
 			},
 		},
 		`duplicate entries`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname:    "foo",
-						Type:        image.KubernetesNodeTypeServer,
+						Type:        context.KubernetesNodeTypeServer,
 						Initialiser: true,
 					},
 					{
 						Hostname: "bar",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 					{
 						Hostname: "bar",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 					{
 						Hostname: "foo",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 				},
 			},
@@ -294,35 +292,35 @@ func TestValidateNodes(t *testing.T) {
 			},
 		},
 		`no server node`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname: "foo",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 					{
 						Hostname: "bar",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("There must be at least one node of type '%s' defined.", image.KubernetesNodeTypeServer),
+				fmt.Sprintf("There must be at least one node of type '%s' defined.", context.KubernetesNodeTypeServer),
 			},
 		},
 		`multiple initialisers`: {
-			K8s: image.Kubernetes{
+			K8s: context.Kubernetes{
 				Network: validNetwork,
-				Nodes: []image.Node{
+				Nodes: []context.Node{
 					{
 						Hostname:    "foo",
-						Type:        image.KubernetesNodeTypeServer,
+						Type:        context.KubernetesNodeTypeServer,
 						Initialiser: true,
 					},
 					{
 						Hostname:    "bar",
-						Type:        image.KubernetesNodeTypeServer,
+						Type:        context.KubernetesNodeTypeServer,
 						Initialiser: true,
 					},
 				},
@@ -354,12 +352,12 @@ func TestValidateNodes(t *testing.T) {
 
 func TestValidateManifestURLs(t *testing.T) {
 	tests := map[string]struct {
-		K8s                    image.Kubernetes
+		K8s                    context.Kubernetes
 		ExpectedFailedMessages []string
 	}{
 		`valid`: {
-			K8s: image.Kubernetes{
-				Manifests: image.Manifests{
+			K8s: context.Kubernetes{
+				Manifests: context.Manifests{
 					URLs: []string{
 						"http://valid1.com",
 						"https://valid2.com",
@@ -368,13 +366,13 @@ func TestValidateManifestURLs(t *testing.T) {
 			},
 		},
 		`no URLs`: {
-			K8s: image.Kubernetes{
-				Manifests: image.Manifests{},
+			K8s: context.Kubernetes{
+				Manifests: context.Manifests{},
 			},
 		},
 		`invalid prefix`: {
-			K8s: image.Kubernetes{
-				Manifests: image.Manifests{
+			K8s: context.Kubernetes{
+				Manifests: context.Manifests{
 					URLs: []string{
 						"http://valid.com",
 						"https://also-valid.com",
@@ -389,8 +387,8 @@ func TestValidateManifestURLs(t *testing.T) {
 			},
 		},
 		`duplicate URLs`: {
-			K8s: image.Kubernetes{
-				Manifests: image.Manifests{
+			K8s: context.Kubernetes{
+				Manifests: context.Manifests{
 					URLs: []string{
 						"http://foo.com",
 						"http://bar.com",
@@ -426,13 +424,13 @@ func TestValidateManifestURLs(t *testing.T) {
 
 func TestValidateHelmCharts(t *testing.T) {
 	tests := map[string]struct {
-		K8s                    image.Kubernetes
+		K8s                    context.Kubernetes
 		ExpectedFailedMessages []string
 	}{
 		`valid`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:                  "apache",
 							RepositoryName:        "apache-repo",
@@ -460,11 +458,11 @@ func TestValidateHelmCharts(t *testing.T) {
 							Version:               "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
-							Authentication: image.HelmAuthentication{
+							Authentication: context.HelmAuthentication{
 								Username: "user",
 								Password: "pass",
 							},
@@ -474,9 +472,9 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm no repos`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
@@ -490,16 +488,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm chart no name`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -512,9 +510,9 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm chart undefined repository name`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "kubevirt",
 							RepositoryName: "suse-edge",
@@ -526,7 +524,7 @@ func TestValidateHelmCharts(t *testing.T) {
 							Version:        "0.14.3",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "suse-edge",
 							URL:  "https://suse-edge.github.io/charts",
@@ -539,9 +537,9 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm chart no matching repository name`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "kubevirt",
 							RepositoryName: "suse-edge",
@@ -553,7 +551,7 @@ func TestValidateHelmCharts(t *testing.T) {
 							Version:        "0.14.3",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "suse-edge",
 							URL:  "https://suse-edge.github.io/charts",
@@ -566,16 +564,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm chart no version`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -588,9 +586,9 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm chart create namespace no target`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:            "apache",
 							RepositoryName:  "apache-repo",
@@ -598,7 +596,7 @@ func TestValidateHelmCharts(t *testing.T) {
 							CreateNamespace: true,
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -611,9 +609,9 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm chart duplicate name no release name`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
@@ -625,7 +623,7 @@ func TestValidateHelmCharts(t *testing.T) {
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -640,9 +638,9 @@ func TestValidateHelmCharts(t *testing.T) {
 		// This configuration would be valid for a regular chart deployment;
 		// however, since we use the Helm controller, a different target namespace is not sufficient. The release names must be different.
 		`helm chart duplicate name, same release name, different target namespaces`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:            "apache",
 							ReleaseName:     "apache-deployment",
@@ -658,7 +656,7 @@ func TestValidateHelmCharts(t *testing.T) {
 							Version:         "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -671,9 +669,9 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm chart invalid values file`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
@@ -681,7 +679,7 @@ func TestValidateHelmCharts(t *testing.T) {
 							ValuesFile:     "invalid",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -694,9 +692,9 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm chart nonexistent values file`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
@@ -704,7 +702,7 @@ func TestValidateHelmCharts(t *testing.T) {
 							ValuesFile:     "nonexistent.yaml",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -717,16 +715,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository no name`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "",
 							URL:  "https://suse-edge.github.io/charts",
@@ -743,16 +741,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository no url`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "",
@@ -765,16 +763,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository invalid url`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "invalid.repo.io/bitnami",
@@ -787,20 +785,20 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository username no password`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
-							Authentication: image.HelmAuthentication{
+							Authentication: context.HelmAuthentication{
 								Username: "user",
 								Password: "",
 							},
@@ -813,20 +811,20 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository password no username`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
-							Authentication: image.HelmAuthentication{
+							Authentication: context.HelmAuthentication{
 								Username: "",
 								Password: "pass",
 							},
@@ -839,16 +837,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository both skipTLSVerify and plainHTTP true`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name:          "apache-repo",
 							URL:           "oci://registry-1.docker.io/bitnamicharts",
@@ -863,16 +861,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository skipTLSVerify true for http`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "metallb",
 							RepositoryName: "suse-edge",
 							Version:        "0.14.3",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name:          "suse-edge",
 							URL:           "http://suse-edge.github.io/charts",
@@ -887,16 +885,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository plainHTTP false for http`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "metallb",
 							RepositoryName: "suse-edge",
 							Version:        "0.14.3",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name:      "suse-edge",
 							URL:       "http://suse-edge.github.io/charts",
@@ -910,16 +908,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository plainHTTP true for https`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "metallb",
 							RepositoryName: "suse-edge",
 							Version:        "0.14.3",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name:      "suse-edge",
 							URL:       "https://suse-edge.github.io/charts",
@@ -933,16 +931,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository plainHTTP and ca file`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "metallb",
 							RepositoryName: "suse-edge",
 							Version:        "0.14.3",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name:      "suse-edge",
 							URL:       "http://suse-edge.github.io/charts",
@@ -959,16 +957,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repository skipTLSVerify and ca file`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "metallb",
 							RepositoryName: "suse-edge",
 							Version:        "0.14.3",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name:          "suse-edge",
 							URL:           "https://suse-edge.github.io/charts",
@@ -984,16 +982,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repo nonexistent cert file`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name:   "apache-repo",
 							URL:    "oci://registry-1.docker.io/bitnamicharts",
@@ -1007,16 +1005,16 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 		},
 		`helm repo invalid cert file`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+			K8s: context.Kubernetes{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "apache",
 							RepositoryName: "apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name:   "apache-repo",
 							URL:    "oci://registry-1.docker.io/bitnamicharts",
@@ -1065,25 +1063,25 @@ func TestValidateAdditionalArtifacts(t *testing.T) {
 	require.NoError(t, os.WriteFile(testManifest, []byte(""), 0o600))
 
 	tests := map[string]struct {
-		K8s                    image.Kubernetes
+		K8s                    context.Kubernetes
 		ExpectedFailedMessages []string
 	}{
 		`missing versions all sections`: {
-			K8s: image.Kubernetes{
-				Manifests: image.Manifests{
+			K8s: context.Kubernetes{
+				Manifests: context.Manifests{
 					URLs: []string{
 						"example.com",
 					},
 				},
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
+				Helm: context.Helm{
+					Charts: []context.HelmChart{
 						{
 							Name:           "",
 							RepositoryName: "another-apache-repo",
 							Version:        "10.7.0",
 						},
 					},
-					Repositories: []image.HelmRepository{
+					Repositories: []context.HelmRepository{
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts",
@@ -1103,7 +1101,7 @@ func TestValidateAdditionalArtifacts(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ctx := &context.Context{
 				ImageConfigDir: configDir,
-				ImageDefinition: &image.Definition{
+				Definition: &image.Definition{
 					Kubernetes: test.K8s,
 				},
 			}
@@ -1125,17 +1123,17 @@ func TestValidateAdditionalArtifacts(t *testing.T) {
 
 func TestValidateNetwork(t *testing.T) {
 	tests := map[string]struct {
-		K8s                    image.Kubernetes
+		K8s                    context.Kubernetes
 		ExpectedFailedMessages []string
 	}{
 		`no network defined, no nodes defined`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{},
+			K8s: context.Kubernetes{
+				Network: context.Network{},
 			},
 		},
 		`IPv6 in apiVIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "fd12:3456:789a::21",
 				},
 			},
@@ -1144,8 +1142,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`IPv4 in apiVIP6`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP6: "192.168.1.1",
 				},
 			},
@@ -1154,9 +1152,9 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`no network defined, nodes defined`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{},
-				Nodes: []image.Node{
+			K8s: context.Kubernetes{
+				Network: context.Network{},
+				Nodes: []context.Node{
 					{
 						Hostname:    "node1",
 						Type:        "server",
@@ -1174,15 +1172,15 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`valid IPv4`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 				},
 			},
 		},
 		`invalid IPv4`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "500.168.1.1",
 				},
 			},
@@ -1191,15 +1189,15 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`valid IPv6`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP6: "fd12:3456:789a::21",
 				},
 			},
 		},
 		`invalid IPv6`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP6: "xxxx:3456:789a::21",
 				},
 			},
@@ -1208,16 +1206,16 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`valid dualstack`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
 			},
 		},
 		`invalid dualstack IPv4 non unicast`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "127.0.0.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1227,8 +1225,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`invalid dualstack IPv6 non unicast`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "ff02::1",
 				},
@@ -1238,8 +1236,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`invalid dualstack both non unicast`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "127.0.0.1",
 					APIVIP6: "ff02::1",
 				},
@@ -1250,8 +1248,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`invalid dualstack IPv4 not valid`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "500.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1261,8 +1259,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`invalid dualstack IPv6 not valid`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "xxxx:3456:789a::21",
 				},
@@ -1272,8 +1270,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`undefined v4 VIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "0.0.0.0",
 				},
 			},
@@ -1282,8 +1280,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`undefined v6 VIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP6: "::",
 				},
 			},
@@ -1292,8 +1290,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`loopback v4 VIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "127.0.0.1",
 				},
 			},
@@ -1302,8 +1300,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`loopback v6 VIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP6: "::1",
 				},
 			},
@@ -1312,8 +1310,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`multicast v4 VIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "224.224.224.224",
 				},
 			},
@@ -1322,8 +1320,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`multicast v6 VIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP6: "FF01::1",
 				},
 			},
@@ -1332,8 +1330,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`link-local v4 VIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "169.254.1.1",
 				},
 			},
@@ -1342,8 +1340,8 @@ func TestValidateNetwork(t *testing.T) {
 			},
 		},
 		`link-local v6 VIP`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP6: "FE80::1",
 				},
 			},
@@ -1373,7 +1371,7 @@ func TestValidateNetwork(t *testing.T) {
 }
 
 func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
-	k8s := image.Kubernetes{Network: image.Network{
+	k8s := context.Kubernetes{Network: context.Network{
 		APIVIP4: "192.168.1.1",
 		APIVIP6: "fd12:3456:789a::21",
 	}}
@@ -1386,14 +1384,14 @@ func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
 }
 
 func TestValidateConfigValidAPIVIPNotConfigured(t *testing.T) {
-	k8s := image.Kubernetes{}
+	k8s := context.Kubernetes{}
 
 	failures := validateNetworkingConfig(&k8s, "")
 	assert.Len(t, failures, 0)
 }
 
 func TestValidateConfigValidIPv4Prio(t *testing.T) {
-	k8s := image.Kubernetes{Network: image.Network{
+	k8s := context.Kubernetes{Network: context.Network{
 		APIVIP4: "192.168.1.1",
 		APIVIP6: "fd12:3456:789a::21",
 	}}
@@ -1417,7 +1415,7 @@ func TestValidateConfigValidIPv4Prio(t *testing.T) {
 	require.NoError(t, err)
 
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
+	require.NoError(t, os.WriteFile(configFile, b, 0o600))
 
 	failures := validateNetworkingConfig(&k8s, configFile)
 
@@ -1426,13 +1424,13 @@ func TestValidateConfigValidIPv4Prio(t *testing.T) {
 
 func TestValidateCIDRConfig(t *testing.T) {
 	tests := map[string]struct {
-		K8s                    image.Kubernetes
+		K8s                    context.Kubernetes
 		ServerConfig           map[string]any
 		ExpectedFailedMessages []string
 	}{
 		`cluster cidr not configured`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1445,8 +1443,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`service cidr not configured`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1459,8 +1457,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`invalid IPv4`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1475,8 +1473,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`invalid IPv6`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1491,8 +1489,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`invalid IPv6 prefix`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1507,8 +1505,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`invalid IPv4 prefix`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1523,8 +1521,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`invalid IPv4 non-unicast`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1539,8 +1537,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`invalid IPv6 non-unicast`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1555,7 +1553,7 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`mismatched prio`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"cluster-cidr": "10.42.0.0/16,fd12:3456:789b::/48",
 				"service-cidr": "fd12:3456:789c::/112,10.43.0.0/16",
@@ -1565,15 +1563,15 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`single cidr IPv6`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"cluster-cidr": "fd12:3456:789b::/48",
 				"service-cidr": "fd12:3456:789c::/112",
 			},
 		},
 		`single cidr IPv4`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 				},
 			},
@@ -1583,8 +1581,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`valid dualstack IPv6 prio`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1595,8 +1593,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`valid dualstack IPv4 prio`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1607,8 +1605,8 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`more than 2 cidrs`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
+			K8s: context.Kubernetes{
+				Network: context.Network{
 					APIVIP4: "192.168.1.1",
 					APIVIP6: "fd12:3456:789a::21",
 				},
@@ -1623,7 +1621,7 @@ func TestValidateCIDRConfig(t *testing.T) {
 			},
 		},
 		`no APIVIPs`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"cluster-cidr": "10.42.0.0/16,fd12:3456:789b::/48",
 				"service-cidr": "10.43.0.0/16,fd12:3456:789c::/112",
@@ -1653,37 +1651,37 @@ func TestValidateCIDRConfig(t *testing.T) {
 
 func TestValidateNodeIP(t *testing.T) {
 	tests := map[string]struct {
-		K8s                    image.Kubernetes
+		K8s                    context.Kubernetes
 		ServerConfig           map[string]any
 		ExpectedFailedMessages []string
 	}{
 		`single IPv4`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"node-ip": "10.42.0.0",
 			},
 		},
 		`single IPv6`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"node-ip": "fd12:3456:789a::21",
 			},
 		},
 		`multiple nodes, one server`: {
-			K8s: image.Kubernetes{
-				Nodes: []image.Node{
+			K8s: context.Kubernetes{
+				Nodes: []context.Node{
 					{
 						Hostname:    "server1",
-						Type:        image.KubernetesNodeTypeServer,
+						Type:        context.KubernetesNodeTypeServer,
 						Initialiser: true,
 					},
 					{
 						Hostname: "agent",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 					{
 						Hostname: "agent2",
-						Type:     image.KubernetesNodeTypeAgent,
+						Type:     context.KubernetesNodeTypeAgent,
 					},
 				},
 			},
@@ -1692,15 +1690,15 @@ func TestValidateNodeIP(t *testing.T) {
 			},
 		},
 		`multiple nodes, multiple servers`: {
-			K8s: image.Kubernetes{
-				Nodes: []image.Node{
+			K8s: context.Kubernetes{
+				Nodes: []context.Node{
 					{
 						Hostname: "server1",
-						Type:     image.KubernetesNodeTypeServer,
+						Type:     context.KubernetesNodeTypeServer,
 					},
 					{
 						Hostname:    "server2",
-						Type:        image.KubernetesNodeTypeServer,
+						Type:        context.KubernetesNodeTypeServer,
 						Initialiser: true,
 					},
 				},
@@ -1713,7 +1711,7 @@ func TestValidateNodeIP(t *testing.T) {
 			},
 		},
 		`node ip family both same invalid`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"node-ip": "10.42.0.0,10.43.0.0",
 			},
@@ -1722,13 +1720,13 @@ func TestValidateNodeIP(t *testing.T) {
 			},
 		},
 		`node ip dualstack valid`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"node-ip": "10.42.0.0,fd12:3456:789a::21",
 			},
 		},
 		`node ip non-unicast IPv4 invalid`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"node-ip": "127.0.0.1,fd12:3456:789a::21",
 			},
@@ -1737,7 +1735,7 @@ func TestValidateNodeIP(t *testing.T) {
 			},
 		},
 		`node ip non-unicast IPv6 invalid`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"node-ip": "10.42.0.0,FF01::",
 			},
@@ -1746,7 +1744,7 @@ func TestValidateNodeIP(t *testing.T) {
 			},
 		},
 		`node ip IPv4 invalid`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"node-ip": "550.2.2.2",
 			},
@@ -1755,7 +1753,7 @@ func TestValidateNodeIP(t *testing.T) {
 			},
 		},
 		`node ip IPv6 invalid`: {
-			K8s: image.Kubernetes{},
+			K8s: context.Kubernetes{},
 			ServerConfig: map[string]any{
 				"node-ip": "xxxx:3456:789a::21",
 			},

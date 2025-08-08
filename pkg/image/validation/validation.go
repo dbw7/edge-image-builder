@@ -1,7 +1,7 @@
 package validation
 
 import (
-	"github.com/suse-edge/edge-image-builder/context"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
 type FailedValidation struct {

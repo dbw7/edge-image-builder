@@ -2,10 +2,10 @@ package validation
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -19,21 +19,21 @@ func TestValidateOperatingSystem(t *testing.T) {
 		},
 		`all valid`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeISO,
+				Image: context.Image{
+					ImageType: context.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
 					KernelArgs: []string{"foo=bar", "baz"},
-					Systemd: image.Systemd{
+					Systemd: context.Systemd{
 						Enable:  []string{"runMe"},
 						Disable: []string{"dontRunMe"},
 					},
-					Groups: []image.OperatingSystemGroup{
+					Groups: []context.OperatingSystemGroup{
 						{
 							Name: "eibTeam",
 						},
 					},
-					Users: []image.OperatingSystemUser{
+					Users: []context.OperatingSystemUser{
 						{
 							Username:          "danny",
 							CreateHomeDir:     true,
@@ -41,20 +41,20 @@ func TestValidateOperatingSystem(t *testing.T) {
 							SSHKeys:           []string{"asdf"},
 						},
 					},
-					Suma: image.Suma{
+					Suma: context.Suma{
 						Host:          "example.com",
 						ActivationKey: "please?",
 					},
-					Packages: image.Packages{
+					Packages: context.Packages{
 						PKGList: []string{"zsh", "git"},
-						AdditionalRepos: []image.AddRepo{
+						AdditionalRepos: []context.AddRepo{
 							{
 								URL: "myrepo.com",
 							},
 						},
 						RegCode: "letMeIn",
 					},
-					IsoConfiguration: image.IsoConfiguration{
+					IsoConfiguration: context.IsoConfiguration{
 						InstallDevice: "/dev/sda",
 					},
 				},
@@ -62,16 +62,16 @@ func TestValidateOperatingSystem(t *testing.T) {
 		},
 		`all invalid`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
 					KernelArgs: []string{"foo="},
-					Systemd: image.Systemd{
+					Systemd: context.Systemd{
 						Enable:  []string{"confusedUser"},
 						Disable: []string{"confusedUser"},
 					},
-					Groups: []image.OperatingSystemGroup{
+					Groups: []context.OperatingSystemGroup{
 						{
 							Name: "dupeGroup",
 						},
@@ -79,21 +79,21 @@ func TestValidateOperatingSystem(t *testing.T) {
 							Name: "dupeGroup",
 						},
 					},
-					Users: []image.OperatingSystemUser{
+					Users: []context.OperatingSystemUser{
 						{
 							Username: "danny",
 						},
 					},
-					Suma: image.Suma{
+					Suma: context.Suma{
 						ActivationKey: "please?",
 					},
-					Packages: image.Packages{
+					Packages: context.Packages{
 						PKGList: []string{"zsh", "git"},
 					},
-					IsoConfiguration: image.IsoConfiguration{
+					IsoConfiguration: context.IsoConfiguration{
 						InstallDevice: "/dev/sda",
 					},
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						DiskSize: "64",
 					},
 				},
@@ -104,7 +104,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"Duplicate group name found: dupeGroup",
 				"User 'danny' must have either a password or at least one SSH key.",
 				"The 'host' field is required for the 'suma' section.",
-				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", context.TypeISO),
 				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
@@ -114,7 +114,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			def := test.Definition
 			ctx := context.Context{
-				ImageDefinition: &def,
+				Definition: &def,
 			}
 			failures := validateOperatingSystem(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
@@ -187,20 +187,20 @@ func TestValidateKernelArgs(t *testing.T) {
 
 func TestValidateSystemd(t *testing.T) {
 	tests := map[string]struct {
-		Systemd                image.Systemd
+		Systemd                context.Systemd
 		ExpectedFailedMessages []string
 	}{
 		`no systemd`: {
-			Systemd: image.Systemd{},
+			Systemd: context.Systemd{},
 		},
 		`valid enable and disable`: {
-			Systemd: image.Systemd{
+			Systemd: context.Systemd{
 				Enable:  []string{"foo", "bar"},
 				Disable: []string{"baz"},
 			},
 		},
 		`enable and disable duplicates`: {
-			Systemd: image.Systemd{
+			Systemd: context.Systemd{
 				Enable:  []string{"foo", "foo", "baz", "baz"},
 				Disable: []string{"bar", "bar"},
 			},
@@ -210,7 +210,7 @@ func TestValidateSystemd(t *testing.T) {
 			},
 		},
 		`conflict`: {
-			Systemd: image.Systemd{
+			Systemd: context.Systemd{
 				Enable:  []string{"foo", "bar", "zombie"},
 				Disable: []string{"foo", "bar", "wombat"},
 			},
@@ -243,14 +243,14 @@ func TestValidateSystemd(t *testing.T) {
 
 func TestValidateGroups(t *testing.T) {
 	tests := map[string]struct {
-		Groups                 []image.OperatingSystemGroup
+		Groups                 []context.OperatingSystemGroup
 		ExpectedFailedMessages []string
 	}{
 		`no groups`: {
-			Groups: []image.OperatingSystemGroup{},
+			Groups: []context.OperatingSystemGroup{},
 		},
 		`valid groups`: {
-			Groups: []image.OperatingSystemGroup{
+			Groups: []context.OperatingSystemGroup{
 				{
 					Name: "group1",
 				},
@@ -260,7 +260,7 @@ func TestValidateGroups(t *testing.T) {
 			},
 		},
 		`missing group name`: {
-			Groups: []image.OperatingSystemGroup{
+			Groups: []context.OperatingSystemGroup{
 				{},
 			},
 			ExpectedFailedMessages: []string{
@@ -268,7 +268,7 @@ func TestValidateGroups(t *testing.T) {
 			},
 		},
 		`duplicate group name`: {
-			Groups: []image.OperatingSystemGroup{
+			Groups: []context.OperatingSystemGroup{
 				{
 					Name: "group1",
 				},
@@ -314,14 +314,14 @@ func TestValidateGroups(t *testing.T) {
 
 func TestValidateUsers(t *testing.T) {
 	tests := map[string]struct {
-		Users                  []image.OperatingSystemUser
+		Users                  []context.OperatingSystemUser
 		ExpectedFailedMessages []string
 	}{
 		`no users`: {
-			Users: []image.OperatingSystemUser{},
+			Users: []context.OperatingSystemUser{},
 		},
 		`valid users`: {
-			Users: []image.OperatingSystemUser{
+			Users: []context.OperatingSystemUser{
 				{
 					Username:          "jay",
 					CreateHomeDir:     true,
@@ -340,7 +340,7 @@ func TestValidateUsers(t *testing.T) {
 			},
 		},
 		`user no credentials`: {
-			Users: []image.OperatingSystemUser{
+			Users: []context.OperatingSystemUser{
 				{
 					Username: "danny",
 				},
@@ -350,7 +350,7 @@ func TestValidateUsers(t *testing.T) {
 			},
 		},
 		`duplicate user`: {
-			Users: []image.OperatingSystemUser{
+			Users: []context.OperatingSystemUser{
 				{
 					Username:          "ivo",
 					EncryptedPassword: "password1",
@@ -366,7 +366,7 @@ func TestValidateUsers(t *testing.T) {
 			},
 		},
 		`ssh key and no create home`: {
-			Users: []image.OperatingSystemUser{
+			Users: []context.OperatingSystemUser{
 				{
 					Username: "edu",
 					SSHKeys:  []string{"key1"},
@@ -400,20 +400,20 @@ func TestValidateUsers(t *testing.T) {
 
 func TestValidateSuma(t *testing.T) {
 	tests := map[string]struct {
-		Suma                   image.Suma
+		Suma                   context.Suma
 		ExpectedFailedMessages []string
 	}{
 		`no suma`: {
-			Suma: image.Suma{},
+			Suma: context.Suma{},
 		},
 		`valid suma`: {
-			Suma: image.Suma{
+			Suma: context.Suma{
 				Host:          "non-http",
 				ActivationKey: "foo",
 			},
 		},
 		`no host`: {
-			Suma: image.Suma{
+			Suma: context.Suma{
 				ActivationKey: "foo",
 			},
 			ExpectedFailedMessages: []string{
@@ -421,7 +421,7 @@ func TestValidateSuma(t *testing.T) {
 			},
 		},
 		`http host`: {
-			Suma: image.Suma{
+			Suma: context.Suma{
 				Host:          "http://example.com",
 				ActivationKey: "foo",
 			},
@@ -430,7 +430,7 @@ func TestValidateSuma(t *testing.T) {
 			},
 		},
 		`no activation key`: {
-			Suma: image.Suma{
+			Suma: context.Suma{
 				Host: "valid",
 			},
 			ExpectedFailedMessages: []string{
@@ -461,16 +461,16 @@ func TestValidateSuma(t *testing.T) {
 
 func TestPackages(t *testing.T) {
 	tests := map[string]struct {
-		Packages               image.Packages
+		Packages               context.Packages
 		ExpectedFailedMessages []string
 	}{
 		`no packages`: {
-			Packages: image.Packages{},
+			Packages: context.Packages{},
 		},
 		`valid`: {
-			Packages: image.Packages{
+			Packages: context.Packages{
 				PKGList: []string{"foo"},
-				AdditionalRepos: []image.AddRepo{
+				AdditionalRepos: []context.AddRepo{
 					{
 						URL: "myrepo",
 					},
@@ -479,7 +479,7 @@ func TestPackages(t *testing.T) {
 			},
 		},
 		`empty package`: {
-			Packages: image.Packages{
+			Packages: context.Packages{
 				PKGList: []string{"foo", "bar", ""},
 			},
 			ExpectedFailedMessages: []string{
@@ -487,7 +487,7 @@ func TestPackages(t *testing.T) {
 			},
 		},
 		`duplicate packages`: {
-			Packages: image.Packages{
+			Packages: context.Packages{
 				PKGList: []string{"foo", "bar", "foo", "bar", "baz"},
 				RegCode: "regcode",
 			},
@@ -496,8 +496,8 @@ func TestPackages(t *testing.T) {
 			},
 		},
 		`duplicate repos`: {
-			Packages: image.Packages{
-				AdditionalRepos: []image.AddRepo{
+			Packages: context.Packages{
+				AdditionalRepos: []context.AddRepo{
 					{
 						URL: "foo",
 					},
@@ -514,8 +514,8 @@ func TestPackages(t *testing.T) {
 			},
 		},
 		`missing repo url`: {
-			Packages: image.Packages{
-				AdditionalRepos: []image.AddRepo{
+			Packages: context.Packages{
+				AdditionalRepos: []context.AddRepo{
 					{
 						URL: "",
 					},
@@ -560,11 +560,11 @@ func TestValidateUnattended(t *testing.T) {
 		},
 		`iso install device specified`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeISO,
+				Image: context.Image{
+					ImageType: context.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
-					IsoConfiguration: image.IsoConfiguration{
+					IsoConfiguration: context.IsoConfiguration{
 						InstallDevice: "/dev/sda",
 					},
 				},
@@ -572,17 +572,17 @@ func TestValidateUnattended(t *testing.T) {
 		},
 		`not iso install device`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					IsoConfiguration: image.IsoConfiguration{
+					IsoConfiguration: context.IsoConfiguration{
 						InstallDevice: "/dev/sda",
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", context.TypeISO),
 			},
 		},
 	}
@@ -615,11 +615,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`diskSize specified and valid`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						DiskSize: "64G",
 					},
 				},
@@ -627,11 +627,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`diskSize invalid as invalid suffix`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						DiskSize: "130B",
 					},
 				},
@@ -642,11 +642,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`diskSize invalid as zero`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						DiskSize: "0G",
 					},
 				},
@@ -657,11 +657,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`diskSize invalid as lowercase character`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						DiskSize: "100g",
 					},
 				},
@@ -672,11 +672,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`diskSize invalid as negative number`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						DiskSize: "-100G",
 					},
 				},
@@ -687,11 +687,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`diskSize invalid as no number provided`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						DiskSize: "G",
 					},
 				},
@@ -702,11 +702,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`luksKey defined image type RAW`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						LUKSKey: "1234",
 					},
 				},
@@ -714,26 +714,26 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`luksKey defined with image type ISO`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeISO,
+				Image: context.Image{
+					ImageType: context.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						LUKSKey: "1234",
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'luksKey' field should only be defined for '%s' encrypted images.", image.TypeRAW),
+				fmt.Sprintf("The 'luksKey' field should only be defined for '%s' encrypted images.", context.TypeRAW),
 			},
 		},
 		`luksKey defined with expandEncryptedPartition true image type RAW`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						LUKSKey:                  "1234",
 						ExpandEncryptedPartition: true,
 					},
@@ -742,11 +742,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`luksKey not defined with expandEncryptedPartition true image type RAW`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+				Image: context.Image{
+					ImageType: context.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						ExpandEncryptedPartition: true,
 					},
 				},
@@ -757,11 +757,11 @@ func TestValidateRawConfiguration(t *testing.T) {
 		},
 		`expandEncryptedPartition true image type ISO`: {
 			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeISO,
+				Image: context.Image{
+					ImageType: context.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						ExpandEncryptedPartition: true,
 						LUKSKey:                  "1234",
 					},
@@ -794,34 +794,34 @@ func TestValidateRawConfiguration(t *testing.T) {
 
 func TestValidateTimeSync(t *testing.T) {
 	tests := map[string]struct {
-		Time                   image.Time
+		Time                   context.Time
 		ExpectedFailedMessages []string
 	}{
 		`not included`: {
-			Time: image.Time{},
+			Time: context.Time{},
 		},
 		`forceWait specified and only NTP pools configured`: {
-			Time: image.Time{
+			Time: context.Time{
 				Timezone: "Europe/London",
-				NtpConfiguration: image.NtpConfiguration{
+				NtpConfiguration: context.NtpConfiguration{
 					Pools:     []string{"2.suse.pool.ntp.org"},
 					ForceWait: true,
 				},
 			},
 		},
 		`forceWait specified and only NTP servers configured`: {
-			Time: image.Time{
+			Time: context.Time{
 				Timezone: "Europe/London",
-				NtpConfiguration: image.NtpConfiguration{
+				NtpConfiguration: context.NtpConfiguration{
 					Servers:   []string{"10.0.0.1", "10.0.0.2"},
 					ForceWait: true,
 				},
 			},
 		},
 		`forceWait specified and NTP sources missing`: {
-			Time: image.Time{
+			Time: context.Time{
 				Timezone: "Europe/London",
-				NtpConfiguration: image.NtpConfiguration{
+				NtpConfiguration: context.NtpConfiguration{
 					ForceWait: true,
 				},
 			},
@@ -872,7 +872,7 @@ func TestValidateFIPS(t *testing.T) {
 		`FIPS enabled with SCC code`: {
 			OperatingSystem: image.OperatingSystem{
 				EnableFIPS: true,
-				Packages: image.Packages{
+				Packages: context.Packages{
 					RegCode: "scc-code",
 				},
 			},
@@ -880,8 +880,8 @@ func TestValidateFIPS(t *testing.T) {
 		`FIPS enabled with additional repos`: {
 			OperatingSystem: image.OperatingSystem{
 				EnableFIPS: true,
-				Packages: image.Packages{
-					AdditionalRepos: []image.AddRepo{
+				Packages: context.Packages{
+					AdditionalRepos: []context.AddRepo{
 						{
 							URL: "https://additional-repo.suse",
 						},

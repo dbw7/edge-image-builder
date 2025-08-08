@@ -3,9 +3,9 @@ package image
 import (
 	"bytes"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/version"
 	"gopkg.in/yaml.v3"
 )
@@ -33,7 +33,9 @@ type OperatingSystem struct {
 	EnableFIPS       bool                           `yaml:"enableFIPS"`
 }
 
-func ParseImageDefinition(data []byte) (context.Definition, error) {
+var _ context.Definition = (*Definition)(nil)
+
+func ParseImageDefinition(data []byte) (*Definition, error) {
 	var definition Definition
 
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
@@ -48,81 +50,73 @@ func ParseImageDefinition(data []byte) (context.Definition, error) {
 		return nil, context.ErrorInvalidSchemaVersion
 	}
 
-	return &ImageDefinitionAdapter{Definition: &definition}, nil
+	return &definition, nil
 }
 
-type ImageDefinitionAdapter struct {
-	*Definition
+func (d *Definition) GetAPIVersion() string {
+	return d.APIVersion
 }
 
-func (a *ImageDefinitionAdapter) GetAPIVersion() string {
-	return a.APIVersion
+func (d *Definition) GetImage() context.Image {
+	return d.Image
 }
 
-func (a *ImageDefinitionAdapter) GetImage() context.Image {
-	return a.Image
+func (d *Definition) GetOperatingSystem() context.OperatingSystem {
+	return &d.OperatingSystem
 }
 
-func (a *ImageDefinitionAdapter) GetOperatingSystem() context.OperatingSystemInterface {
-	return &ImageOSAdapter{OS: &a.OperatingSystem}
+func (d *Definition) GetKubernetes() *context.Kubernetes {
+	return &d.Kubernetes
 }
 
-func (a *ImageDefinitionAdapter) GetKubernetes() *context.Kubernetes {
-	return &a.Kubernetes
+func (d *Definition) GetEmbeddedArtifactRegistry() context.EmbeddedArtifactRegistry {
+	return d.EmbeddedArtifactRegistry
 }
 
-func (a *ImageDefinitionAdapter) GetEmbeddedArtifactRegistry() context.EmbeddedArtifactRegistry {
-	return a.EmbeddedArtifactRegistry
+func (o *OperatingSystem) GetUsers() []context.OperatingSystemUser {
+	return o.Users
 }
 
-type ImageOSAdapter struct {
-	OS *OperatingSystem
+func (o *OperatingSystem) GetGroups() []context.OperatingSystemGroup {
+	return o.Groups
 }
 
-func (o *ImageOSAdapter) GetUsers() []context.OperatingSystemUser {
-	return o.OS.Users
+func (o *OperatingSystem) GetSystemd() context.Systemd {
+	return o.Systemd
 }
 
-func (o *ImageOSAdapter) GetGroups() []context.OperatingSystemGroup {
-	return o.OS.Groups
+func (o *OperatingSystem) GetSuma() context.Suma {
+	return o.Suma
 }
 
-func (o *ImageOSAdapter) GetSystemd() context.Systemd {
-	return o.OS.Systemd
+func (o *OperatingSystem) GetTime() context.Time {
+	return o.Time
 }
 
-func (o *ImageOSAdapter) GetSuma() context.Suma {
-	return o.OS.Suma
+func (o *OperatingSystem) GetProxy() context.Proxy {
+	return o.Proxy
 }
 
-func (o *ImageOSAdapter) GetTime() context.Time {
-	return o.OS.Time
+func (o *OperatingSystem) GetKeymap() string {
+	return o.Keymap
 }
 
-func (o *ImageOSAdapter) GetProxy() context.Proxy {
-	return o.OS.Proxy
+func (o *OperatingSystem) GetKernelArgs() []string {
+	return o.KernelArgs
 }
 
-func (o *ImageOSAdapter) GetKeymap() string {
-	return o.OS.Keymap
+func (o *OperatingSystem) GetPackages() context.Packages {
+	return o.Packages
 }
 
-func (o *ImageOSAdapter) GetKernelArgs() []string {
-	return o.OS.KernelArgs
+func (o *OperatingSystem) GetEnableFIPS() bool {
+	return o.EnableFIPS
 }
 
-func (o *ImageOSAdapter) GetPackages() context.Packages {
-	return o.OS.Packages
+func (o *OperatingSystem) GetIsoConfiguration() context.IsoConfiguration {
+	return o.IsoConfiguration
 }
 
-func (o *ImageOSAdapter) GetEnableFIPS() bool {
-	return o.OS.EnableFIPS
-}
-
-func (o *ImageOSAdapter) GetIsoConfiguration() context.IsoConfiguration {
-	return o.OS.IsoConfiguration
-}
-
-func (o *ImageOSAdapter) GetRawConfiguration() context.RawConfiguration {
-	return o.OS.RawConfiguration
+func (o *OperatingSystem) GetRawConfiguration() context.RawConfiguration {
+	return o.RawConfiguration
 }

@@ -1,13 +1,13 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -16,11 +16,9 @@ func TestConfigureProxy_NoConf(t *testing.T) {
 	// Setup
 	var ctx context.Context
 
-	ctx.Definition = &image.ImageDefinitionAdapter{
-		&image.Definition{
-			OperatingSystem: image.OperatingSystem{
-				Proxy: context.Proxy{},
-			},
+	ctx.Definition = &image.Definition{
+		OperatingSystem: image.OperatingSystem{
+			Proxy: context.Proxy{},
 		},
 	}
 

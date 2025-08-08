@@ -1,10 +1,10 @@
 package validation
 
 import (
-	"github.com/suse-edge/edge-image-builder/context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -17,21 +17,21 @@ func TestValidateVersion(t *testing.T) {
 			ImageDefinition: image.Definition{
 				APIVersion: "1.0",
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						LUKSKey:                  "1234",
 						ExpandEncryptedPartition: true,
 					},
 					EnableFIPS: true,
-					Packages: image.Packages{
+					Packages: context.Packages{
 						EnableExtras: true,
 					},
 				},
-				Kubernetes: image.Kubernetes{
-					Network: image.Network{
+				Kubernetes: context.Kubernetes{
+					Network: context.Network{
 						APIVIP6: "fd12:3456:789a::21",
 					},
-					Helm: image.Helm{
-						Charts: []image.HelmChart{
+					Helm: context.Helm{
+						Charts: []context.HelmChart{
 							{
 								APIVersions: []string{"1.30.3+k3s1"},
 								ReleaseName: "release-1",
@@ -39,11 +39,11 @@ func TestValidateVersion(t *testing.T) {
 						},
 					},
 				},
-				EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
-					Registries: []image.Registry{
+				EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
+					Registries: []context.Registry{
 						{
 							URI: "docker.io",
-							Authentication: image.RegistryAuthentication{
+							Authentication: context.RegistryAuthentication{
 								Username: "user",
 								Password: "pass",
 							},
@@ -66,31 +66,31 @@ func TestValidateVersion(t *testing.T) {
 			ImageDefinition: image.Definition{
 				APIVersion: "1.1",
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						LUKSKey:                  "1234",
 						ExpandEncryptedPartition: true,
 					},
-					Packages: image.Packages{
+					Packages: context.Packages{
 						EnableExtras: true,
 					},
 				},
-				Kubernetes: image.Kubernetes{
-					Network: image.Network{
+				Kubernetes: context.Kubernetes{
+					Network: context.Network{
 						APIVIP6: "fd12:3456:789a::21",
 					},
-					Helm: image.Helm{
-						Charts: []image.HelmChart{
+					Helm: context.Helm{
+						Charts: []context.HelmChart{
 							{
 								ReleaseName: "release-1",
 							},
 						},
 					},
 				},
-				EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
-					Registries: []image.Registry{
+				EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
+					Registries: []context.Registry{
 						{
 							URI: "docker.io",
-							Authentication: image.RegistryAuthentication{
+							Authentication: context.RegistryAuthentication{
 								Username: "user",
 								Password: "pass",
 							},
@@ -111,8 +111,8 @@ func TestValidateVersion(t *testing.T) {
 			ImageDefinition: image.Definition{
 				APIVersion:      "1.1",
 				OperatingSystem: image.OperatingSystem{EnableFIPS: true},
-				Kubernetes: image.Kubernetes{
-					Helm: image.Helm{Charts: []image.HelmChart{{APIVersions: []string{"1.30.3+k3s1"}}}},
+				Kubernetes: context.Kubernetes{
+					Helm: context.Helm{Charts: []context.HelmChart{{APIVersions: []string{"1.30.3+k3s1"}}}},
 				},
 			},
 		},
@@ -120,31 +120,31 @@ func TestValidateVersion(t *testing.T) {
 			ImageDefinition: image.Definition{
 				APIVersion: "1.2",
 				OperatingSystem: image.OperatingSystem{
-					RawConfiguration: image.RawConfiguration{
+					RawConfiguration: context.RawConfiguration{
 						LUKSKey:                  "1234",
 						ExpandEncryptedPartition: true,
 					},
-					Packages: image.Packages{
+					Packages: context.Packages{
 						EnableExtras: true,
 					},
 				},
-				Kubernetes: image.Kubernetes{
-					Network: image.Network{
+				Kubernetes: context.Kubernetes{
+					Network: context.Network{
 						APIVIP6: "fd12:3456:789a::21",
 					},
-					Helm: image.Helm{
-						Charts: []image.HelmChart{
+					Helm: context.Helm{
+						Charts: []context.HelmChart{
 							{
 								ReleaseName: "release-1",
 							},
 						},
 					},
 				},
-				EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
-					Registries: []image.Registry{
+				EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
+					Registries: []context.Registry{
 						{
 							URI: "docker.io",
-							Authentication: image.RegistryAuthentication{
+							Authentication: context.RegistryAuthentication{
 								Username: "user",
 								Password: "pass",
 							},
@@ -159,7 +159,7 @@ func TestValidateVersion(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			imageDef := test.ImageDefinition
 			ctx := context.Context{
-				ImageDefinition: &imageDef,
+				Definition: &imageDef,
 			}
 			failedValidations := validateVersion(&ctx)
 			assert.Len(t, failedValidations, len(test.ExpectedFailedMessages))

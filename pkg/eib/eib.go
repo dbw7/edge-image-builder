@@ -3,14 +3,15 @@ package eib
 import (
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 
 	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm"
@@ -138,13 +139,11 @@ func appendRPMs(ctx *context.Context, repos []context.AddRepo, packages ...strin
 	packageList := ctx.Definition.GetOperatingSystem().GetPackages().PKGList
 	packageList = append(packageList, packages...)
 
-	def := &image.ImageDefinitionAdapter{
-		Definition: &image.Definition{
-			OperatingSystem: image.OperatingSystem{
-				Packages: context.Packages{
-					PKGList:         packageList,
-					AdditionalRepos: repositories,
-				},
+	def := &image.Definition{
+		OperatingSystem: image.OperatingSystem{
+			Packages: context.Packages{
+				PKGList:         packageList,
+				AdditionalRepos: repositories,
 			},
 		},
 	}
@@ -155,33 +154,18 @@ func appendRPMs(ctx *context.Context, repos []context.AddRepo, packages ...strin
 func appendHelm(ctx *context.Context) {
 	componentCharts, componentRepos := combustion.ComponentHelmCharts(ctx)
 
-	def := &image.ImageDefinitionAdapter{
-		Definition: &image.Definition{
-			Kubernetes: context.Kubernetes{
-				Helm: context.Helm{
-					Charts:       append(ctx.Definition.GetKubernetes().Helm.Charts, componentCharts...),
-					Repositories: append(ctx.Definition.GetKubernetes().Helm.Repositories, componentRepos...),
-				},
-			},
-		},
-	}
-
-	ctx.Definition = def
+	k8s := ctx.Definition.GetKubernetes()
+	k8s.Helm.Charts = append(k8s.Helm.Charts, componentCharts...)
+	k8s.Helm.Repositories = append(k8s.Helm.Repositories, componentRepos...)
 }
 
 func appendKernelArgs(ctx *context.Context, kernelArgs ...string) {
-	kernelArgList := ctx.Definition.GetOperatingSystem().GetKernelArgs()
+	os := ctx.Definition.GetOperatingSystem()
+
+	kernelArgList := os.GetKernelArgs()
 	kernelArgList = append(kernelArgList, kernelArgs...)
 
-	def := &image.ImageDefinitionAdapter{
-		Definition: &image.Definition{
-			OperatingSystem: image.OperatingSystem{
-				KernelArgs: kernelArgList,
-			},
-		},
-	}
-
-	ctx.Definition = def
+	// TODO: Figure out a setter
 }
 
 func buildCombustion(ctx *context.Context, rootDir string) (*combustion.Combustion, error) {

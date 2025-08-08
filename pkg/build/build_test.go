@@ -1,13 +1,13 @@
 package build
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -44,11 +44,9 @@ func TestDeleteNoExistingImage(t *testing.T) {
 	builder := Builder{
 		context: &context.Context{
 			ImageConfigDir: tmpDir,
-			Definition: &image.ImageDefinitionAdapter{
-				&image.Definition{
-					Image: context.Image{
-						OutputImageName: "not-there",
-					},
+			Definition: &image.Definition{
+				Image: context.Image{
+					OutputImageName: "not-there",
 				},
 			},
 		},
@@ -70,11 +68,9 @@ func TestDeleteExistingImage(t *testing.T) {
 	builder := Builder{
 		context: &context.Context{
 			ImageConfigDir: tmpDir,
-			Definition: &image.ImageDefinitionAdapter{
-				&image.Definition{
-					Image: context.Image{
-						OutputImageName: "not-there",
-					},
+			Definition: &image.Definition{
+				Image: context.Image{
+					OutputImageName: "not-there",
 				},
 			},
 		},

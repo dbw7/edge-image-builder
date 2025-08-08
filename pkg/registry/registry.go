@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	context2 "github.com/suse-edge/edge-image-builder/pkg/context"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/schollz/progressbar/v3"
+	context2 "github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"go.uber.org/zap"
@@ -105,7 +105,7 @@ func storeManifests(ctx *context2.Context, localManifestsDir string) (string, er
 }
 
 func storeHelmCharts(ctx *context2.Context, helmClient helmClient) ([]*helmChart, error) {
-	helm := &ctx.Definition.GetKubernetes().Helm
+	helm := ctx.Definition.GetKubernetes().Helm
 
 	if len(helm.Charts) == 0 {
 		return nil, nil
@@ -118,7 +118,7 @@ func storeHelmCharts(ctx *context2.Context, helmClient helmClient) ([]*helmChart
 		return nil, fmt.Errorf("creating helm directory: %w", err)
 	}
 
-	chartRepositories := mapChartsToRepos(helm)
+	chartRepositories := mapChartsToRepos(&helm)
 
 	var charts []*helmChart
 	helmChartPaths := make(map[string]string)

@@ -26,7 +26,9 @@ type OperatingSystem struct {
 	Keymap  string                         `yaml:"keymap"`
 }
 
-func ParseConfigDriveDefinition(data []byte) (context.Definition, error) {
+var _ context.Definition = (*Definition)(nil)
+
+func ParseConfigDriveDefinition(data []byte) (*Definition, error) {
 	var definition Definition
 
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
@@ -40,81 +42,73 @@ func ParseConfigDriveDefinition(data []byte) (context.Definition, error) {
 		return nil, context.ErrorInvalidSchemaVersion
 	}
 
-	return &ConfigDriveDefinitionAdapter{Definition: &definition}, nil
+	return &definition, nil
 }
 
-type ConfigDriveDefinitionAdapter struct {
-	*Definition
+func (d *Definition) GetAPIVersion() string {
+	return d.APIVersion
 }
 
-func (a *ConfigDriveDefinitionAdapter) GetAPIVersion() string {
-	return a.APIVersion
-}
-
-func (a *ConfigDriveDefinitionAdapter) GetImage() context.Image {
+func (d *Definition) GetImage() context.Image {
 	return context.Image{}
 }
 
-func (a *ConfigDriveDefinitionAdapter) GetOperatingSystem() context.OperatingSystemInterface {
-	return &ConfigDriveOSAdapter{OS: &a.OperatingSystem}
+func (d *Definition) GetOperatingSystem() context.OperatingSystem {
+	return &d.OperatingSystem
 }
 
-func (a *ConfigDriveDefinitionAdapter) GetKubernetes() context.Kubernetes {
-	return a.Kubernetes
+func (d *Definition) GetKubernetes() *context.Kubernetes {
+	return &d.Kubernetes
 }
 
-func (a *ConfigDriveDefinitionAdapter) GetEmbeddedArtifactRegistry() context.EmbeddedArtifactRegistry {
-	return a.EmbeddedArtifactRegistry
+func (d *Definition) GetEmbeddedArtifactRegistry() context.EmbeddedArtifactRegistry {
+	return d.EmbeddedArtifactRegistry
 }
 
-type ConfigDriveOSAdapter struct {
-	OS *OperatingSystem
+func (o *OperatingSystem) GetUsers() []context.OperatingSystemUser {
+	return o.Users
 }
 
-func (o *ConfigDriveOSAdapter) GetUsers() []context.OperatingSystemUser {
-	return o.OS.Users
+func (o *OperatingSystem) GetGroups() []context.OperatingSystemGroup {
+	return o.Groups
 }
 
-func (o *ConfigDriveOSAdapter) GetGroups() []context.OperatingSystemGroup {
-	return o.OS.Groups
+func (o *OperatingSystem) GetSystemd() context.Systemd {
+	return o.Systemd
 }
 
-func (o *ConfigDriveOSAdapter) GetSystemd() context.Systemd {
-	return o.OS.Systemd
+func (o *OperatingSystem) GetSuma() context.Suma {
+	return o.Suma
 }
 
-func (o *ConfigDriveOSAdapter) GetSuma() context.Suma {
-	return o.OS.Suma
+func (o *OperatingSystem) GetTime() context.Time {
+	return o.Time
 }
 
-func (o *ConfigDriveOSAdapter) GetTime() context.Time {
-	return o.OS.Time
+func (o *OperatingSystem) GetProxy() context.Proxy {
+	return o.Proxy
 }
 
-func (o *ConfigDriveOSAdapter) GetProxy() context.Proxy {
-	return o.OS.Proxy
+func (o *OperatingSystem) GetKeymap() string {
+	return o.Keymap
 }
 
-func (o *ConfigDriveOSAdapter) GetKeymap() string {
-	return o.OS.Keymap
-}
-
-func (o *ConfigDriveOSAdapter) GetKernelArgs() []string {
+func (o *OperatingSystem) GetKernelArgs() []string {
 	return []string{}
 }
 
-func (o *ConfigDriveOSAdapter) GetPackages() context.Packages {
+func (o *OperatingSystem) GetPackages() context.Packages {
 	return context.Packages{}
 }
 
-func (o *ConfigDriveOSAdapter) GetEnableFIPS() bool {
+func (o *OperatingSystem) GetEnableFIPS() bool {
 	return false
 }
 
-func (o *ConfigDriveOSAdapter) GetIsoConfiguration() context.IsoConfiguration {
+func (o *OperatingSystem) GetIsoConfiguration() context.IsoConfiguration {
 	return context.IsoConfiguration{}
 }
 
-func (o *ConfigDriveOSAdapter) GetRawConfiguration() context.RawConfiguration {
+func (o *OperatingSystem) GetRawConfiguration() context.RawConfiguration {
 	return context.RawConfiguration{}
 }

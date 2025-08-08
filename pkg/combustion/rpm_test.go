@@ -2,7 +2,6 @@ package combustion
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -74,7 +74,7 @@ func TestSkipRPMComponent_InvalidDefinition(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			def.Definition.OperatingSystem.Packages = test.packages
+			def.OperatingSystem.Packages = test.packages
 			ctx.Definition = def
 			assert.True(t, SkipRPMComponent(ctx))
 		})

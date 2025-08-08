@@ -2,10 +2,11 @@ package build
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,7 @@ func setupContext(t *testing.T) (ctx *context.Context, teardown func()) {
 		ImageConfigDir: configDir,
 		BuildDir:       buildDir,
 		CombustionDir:  combustionDir,
-		Definition:     &image.ImageDefinitionAdapter{&image.Definition{}},
+		Definition:     &image.Definition{},
 	}
 
 	return ctx, func() {
@@ -75,12 +76,10 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 	defer teardown()
 	builder := Builder{context: ctx}
 
-	ctx.Definition = &image.ImageDefinitionAdapter{
-		&image.Definition{
-			OperatingSystem: image.OperatingSystem{
-				IsoConfiguration: context.IsoConfiguration{
-					InstallDevice: "/dev/vda",
-				},
+	ctx.Definition = &image.Definition{
+		OperatingSystem: image.OperatingSystem{
+			IsoConfiguration: context.IsoConfiguration{
+				InstallDevice: "/dev/vda",
 			},
 		},
 	}

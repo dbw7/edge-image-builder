@@ -1,9 +1,10 @@
 package image
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

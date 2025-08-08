@@ -2,13 +2,13 @@ package validation
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
 const (
@@ -95,7 +95,7 @@ func validateElementalConfiguration(ctx *context.Context) []FailedValidation {
 	}
 
 	if len(foundPackages) == 0 {
-		if ctx.ImageDefinition.OperatingSystem.Packages.RegCode == "" {
+		if ctx.Definition.GetOperatingSystem().GetPackages().RegCode == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: fmt.Sprintf("Operating system package registration code field must be defined when using Elemental "+
 					"or the %s RPMs must be manually side-loaded", combustion.ElementalPackages),
