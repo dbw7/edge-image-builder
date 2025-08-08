@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io/fs"
 	"net/netip"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -22,7 +22,7 @@ const (
 
 	tokenKey        = "token"
 	cniKey          = "cni"
-	cniDefaultValue = image.CNITypeCilium
+	cniDefaultValue = context.CNITypeCilium
 	serverKey       = "server"
 	tlsSANKey       = "tls-san"
 	disableKey      = "disable"
@@ -43,7 +43,7 @@ type Cluster struct {
 	AgentConfig map[string]any
 }
 
-func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, error) {
+func NewCluster(kubernetes *context.Kubernetes, configPath string) (*Cluster, error) {
 	serverConfigPath := filepath.Join(configPath, serverConfigFile)
 	serverConfig, err := ParseKubernetesConfig(serverConfigPath)
 	if err != nil {
@@ -89,7 +89,7 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	agentConfig[tokenKey] = serverConfig[tokenKey]
 	agentConfig[serverKey] = serverConfig[serverKey]
 	agentConfig[selinuxKey] = serverConfig[selinuxKey]
-	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
+	if strings.Contains(kubernetes.Version, context.KubernetesDistroRKE2) {
 		agentConfig[cniKey] = serverConfig[cniKey]
 	}
 
@@ -99,7 +99,7 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 		initialiserConfig[k] = v
 	}
 	delete(initialiserConfig, serverKey)
-	if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) {
+	if strings.Contains(kubernetes.Version, context.KubernetesDistroK3S) {
 		initialiserConfig[clusterInitKey] = true
 	}
 
@@ -133,7 +133,7 @@ func ParseKubernetesConfig(configFile string) (map[string]any, error) {
 	return config, nil
 }
 
-func identifyInitialiserNode(kubernetes *image.Kubernetes) string {
+func identifyInitialiserNode(kubernetes *context.Kubernetes) string {
 	for _, node := range kubernetes.Nodes {
 		if node.Initialiser {
 			return node.Hostname
@@ -142,7 +142,7 @@ func identifyInitialiserNode(kubernetes *image.Kubernetes) string {
 
 	// Use the first server node as an initialiser
 	for _, node := range kubernetes.Nodes {
-		if node.Type == image.KubernetesNodeTypeServer {
+		if node.Type == context.KubernetesNodeTypeServer {
 			zap.S().Infof("Using '%s' as the cluster initialiser, as one wasn't explicitly selected", node.Hostname)
 			return node.Hostname
 		}
@@ -151,14 +151,14 @@ func identifyInitialiserNode(kubernetes *image.Kubernetes) string {
 	return ""
 }
 
-func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]any) {
-	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
+func setSingleNodeConfigDefaults(kubernetes *context.Kubernetes, config map[string]any) {
+	if strings.Contains(kubernetes.Version, context.KubernetesDistroRKE2) {
 		setClusterCNI(config)
 	}
 	if kubernetes.Network.APIVIP4 != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
 
-		if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) {
+		if strings.Contains(kubernetes.Version, context.KubernetesDistroK3S) {
 			appendDisabledServices(config, "servicelb")
 		}
 	}
@@ -166,7 +166,7 @@ func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string
 	if kubernetes.Network.APIVIP6 != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
 
-		if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) && kubernetes.Network.APIVIP4 == "" {
+		if strings.Contains(kubernetes.Version, context.KubernetesDistroK3S) && kubernetes.Network.APIVIP4 == "" {
 			appendDisabledServices(config, "servicelb")
 		}
 	}
@@ -177,13 +177,13 @@ func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string
 	delete(config, serverKey)
 }
 
-func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]any, ip4 netip.Addr, ip6 netip.Addr, prioritizeIPv6 bool) {
+func setMultiNodeConfigDefaults(kubernetes *context.Kubernetes, config map[string]any, ip4 netip.Addr, ip6 netip.Addr, prioritizeIPv6 bool) {
 	const (
 		k3sServerPort  = 6443
 		rke2ServerPort = 9345
 	)
 
-	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
+	if strings.Contains(kubernetes.Version, context.KubernetesDistroRKE2) {
 		setClusterAPIAddress(config, ip4, ip6, rke2ServerPort, prioritizeIPv6)
 		setClusterCNI(config)
 	} else {
@@ -314,11 +314,11 @@ func appendDisabledServices(config map[string]any, service string) {
 	}
 }
 
-func ServersCount(nodes []image.Node) int {
+func ServersCount(nodes []context.Node) int {
 	var servers int
 
 	for _, node := range nodes {
-		if node.Type == image.KubernetesNodeTypeServer {
+		if node.Type == context.KubernetesNodeTypeServer {
 			servers++
 		}
 	}

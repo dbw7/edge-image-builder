@@ -1,7 +1,7 @@
 package validation
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/context"
 )
 
 type FailedValidation struct {
@@ -9,9 +9,9 @@ type FailedValidation struct {
 	Error       error
 }
 
-type validateComponent func(ctx *image.Context) []FailedValidation
+type validateComponent func(ctx *context.Context) []FailedValidation
 
-func ValidateDefinition(ctx *image.Context) map[string][]FailedValidation {
+func ValidateDefinition(ctx *context.Context) map[string][]FailedValidation {
 	failures := map[string][]FailedValidation{}
 
 	validations := map[string]validateComponent{

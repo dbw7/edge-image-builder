@@ -3,11 +3,11 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
@@ -27,7 +27,7 @@ var (
 	ElementalPackages = []string{"elemental-register", "elemental-system-agent"}
 )
 
-func configureElemental(ctx *image.Context) ([]string, error) {
+func configureElemental(ctx *context.Context) ([]string, error) {
 	if !isComponentConfigured(ctx, elementalConfigDir) {
 		log.AuditComponentSkipped(elementalComponentName)
 		zap.S().Info("Skipping elemental registration component, configuration is not provided")
@@ -48,7 +48,7 @@ func configureElemental(ctx *image.Context) ([]string, error) {
 	return []string{elementalScriptName}, nil
 }
 
-func copyElementalConfigFile(ctx *image.Context) error {
+func copyElementalConfigFile(ctx *context.Context) error {
 	srcFile := filepath.Join(ctx.ImageConfigDir, elementalConfigDir, elementalConfigName)
 	destFile := filepath.Join(ctx.CombustionDir, elementalConfigName)
 
@@ -60,7 +60,7 @@ func copyElementalConfigFile(ctx *image.Context) error {
 	return nil
 }
 
-func writeElementalCombustionScript(ctx *image.Context) error {
+func writeElementalCombustionScript(ctx *context.Context) error {
 	elementalScriptFilename := filepath.Join(ctx.CombustionDir, elementalScriptName)
 
 	values := struct {
@@ -79,6 +79,6 @@ func writeElementalCombustionScript(ctx *image.Context) error {
 	return nil
 }
 
-func ElementalPath(ctx *image.Context) string {
+func ElementalPath(ctx *context.Context) string {
 	return filepath.Join(ctx.ImageConfigDir, elementalConfigDir)
 }

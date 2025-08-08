@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,10 +14,12 @@ import (
 
 func TestConfigureFIPS_NoConf(t *testing.T) {
 	// Setup
-	var ctx image.Context
+	var ctx context.Context
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{},
+	ctx.Definition = &image.ImageDefinitionAdapter{
+		Definition: &image.Definition{
+			OperatingSystem: image.OperatingSystem{},
+		},
 	}
 
 	// Test
@@ -29,14 +32,14 @@ func TestConfigureFIPS_NoConf(t *testing.T) {
 
 func TestConfigureFIPS_Enabled(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			EnableFIPS: true,
-		},
+	def.OperatingSystem = image.OperatingSystem{
+		EnableFIPS: true,
 	}
+
+	ctx.Definition = def
 
 	// Test
 	scripts, err := configureFIPS(ctx)

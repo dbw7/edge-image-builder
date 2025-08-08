@@ -1,4 +1,4 @@
-package image
+package context
 
 type LocalRPMConfig struct {
 	// RPMPath is the path to the directory holding RPMs that will be side-loaded
@@ -17,7 +17,7 @@ type Context struct {
 	// ArtefactsDir is a subdirectory under BuildDir containing the larger Combustion related files.
 	ArtefactsDir string
 	// ImageDefinition contains the image definition properties.
-	ImageDefinition *Definition
+	Definition Definition
 	// ArtifactSources contains the information necessary for the deployment of external artifacts.
 	ArtifactSources *ArtifactSources
 	// CacheDir contains all of the artifacts that are cached for the build process.
@@ -47,4 +47,16 @@ type ArtifactSources struct {
 			ReleaseURL        string `yaml:"releaseURL"`
 		} `yaml:"rke2"`
 	} `yaml:"kubernetes"`
+}
+
+func BuildContext(buildDir, combustionDir, artefactsDir, configDir string, definition Definition, artifactSources *ArtifactSources) *Context {
+	ctx := &Context{
+		ImageConfigDir:  configDir,
+		BuildDir:        buildDir,
+		CombustionDir:   combustionDir,
+		ArtefactsDir:    artefactsDir,
+		Definition:      definition,
+		ArtifactSources: artifactSources,
+	}
+	return ctx
 }

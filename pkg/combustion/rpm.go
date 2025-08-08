@@ -4,13 +4,13 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
@@ -26,7 +26,7 @@ const (
 //go:embed templates/10-rpm-install.sh.tpl
 var installRPMsScript string
 
-func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
+func (c *Combustion) configureRPMs(ctx *context.Context) ([]string, error) {
 	if SkipRPMComponent(ctx) {
 		log.AuditComponentSkipped(rpmComponentName)
 		zap.L().Info("Skipping RPM component. Configuration is not provided")
@@ -35,7 +35,7 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 
 	zap.L().Info("Configuring RPM component...")
 
-	packages := &ctx.ImageDefinition.OperatingSystem.Packages
+	packages := ctx.Definition.GetOperatingSystem().GetPackages()
 	if packages.NoGPGCheck {
 		log.Audit("WARNING: Running EIB with disabled GPG validation is intended for development purposes only")
 		zap.S().Warn("Disabling GPG validation for the EIB RPM resolver")
@@ -60,7 +60,7 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 	}
 
 	log.Audit("Resolving package dependencies...")
-	repoPath, pkgsList, err := c.RPMResolver.Resolve(packages, localRPMConfig, artefactsPath)
+	repoPath, pkgsList, err := c.RPMResolver.Resolve(&packages, localRPMConfig, artefactsPath)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
@@ -82,8 +82,8 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 }
 
 // SkipRPMComponent determines whether RPM configuration is needed
-func SkipRPMComponent(ctx *image.Context) bool {
-	pkg := ctx.ImageDefinition.OperatingSystem.Packages
+func SkipRPMComponent(ctx *context.Context) bool {
+	pkg := ctx.Definition.GetOperatingSystem().GetPackages()
 
 	if isComponentConfigured(ctx, rpmDir) {
 		// isComponentConfigured will indicate if the directory exists, but not
@@ -129,7 +129,7 @@ func SkipRPMComponent(ctx *image.Context) bool {
 	return true
 }
 
-func writeRPMScript(ctx *image.Context, repoPath string, packages []string) (string, error) {
+func writeRPMScript(ctx *context.Context, repoPath string, packages []string) (string, error) {
 	if len(packages) == 0 {
 		return "", fmt.Errorf("package list cannot be empty")
 	}
@@ -162,25 +162,25 @@ func writeRPMScript(ctx *image.Context, repoPath string, packages []string) (str
 	return installRPMsScriptName, nil
 }
 
-func RPMsPath(ctx *image.Context) string {
+func RPMsPath(ctx *context.Context) string {
 	return generateComponentPath(ctx, rpmDir)
 }
 
-func GPGKeysPath(ctx *image.Context) string {
+func GPGKeysPath(ctx *context.Context) string {
 	rpmDir := RPMsPath(ctx)
 	return filepath.Join(rpmDir, gpgDir)
 }
 
-func fetchLocalRPMConfig(ctx *image.Context) (*image.LocalRPMConfig, error) {
+func fetchLocalRPMConfig(ctx *context.Context) (*context.LocalRPMConfig, error) {
 	if !isComponentConfigured(ctx, rpmDir) {
 		return nil, nil
 	}
 
-	localRPMConfig := &image.LocalRPMConfig{
+	localRPMConfig := &context.LocalRPMConfig{
 		RPMPath: RPMsPath(ctx),
 	}
 
-	gpgCheckDisabled := ctx.ImageDefinition.OperatingSystem.Packages.NoGPGCheck
+	gpgCheckDisabled := ctx.Definition.GetOperatingSystem().GetPackages().NoGPGCheck
 	gpgPath := GPGKeysPath(ctx)
 
 	if entries, err := os.ReadDir(gpgPath); err == nil {

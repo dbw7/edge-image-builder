@@ -2,11 +2,11 @@ package combustion
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
@@ -17,7 +17,7 @@ const (
 	customComponentName = "custom files"
 )
 
-func configureCustomFiles(ctx *image.Context) ([]string, error) {
+func configureCustomFiles(ctx *context.Context) ([]string, error) {
 	if !isComponentConfigured(ctx, customDir) {
 		log.AuditComponentSkipped(customComponentName)
 		return nil, nil
@@ -39,13 +39,13 @@ func configureCustomFiles(ctx *image.Context) ([]string, error) {
 	return scripts, nil
 }
 
-func handleCustomFiles(ctx *image.Context) error {
+func handleCustomFiles(ctx *context.Context) error {
 	fullFilesDir := generateComponentPath(ctx, filepath.Join(customDir, customFilesDir))
 	err := copyCustomFiles(fullFilesDir, ctx.CombustionDir)
 	return err
 }
 
-func handleCustomScripts(ctx *image.Context) ([]string, error) {
+func handleCustomScripts(ctx *context.Context) ([]string, error) {
 	fullScriptsDir := generateComponentPath(ctx, filepath.Join(customDir, customScriptsDir))
 	scripts, err := copyCustomScripts(fullScriptsDir, ctx.CombustionDir, &fileio.ExecutablePerms)
 	return scripts, err

@@ -4,12 +4,12 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io/fs"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
@@ -49,7 +49,7 @@ var configureNetworkScript string
 //	│   └── host_config.yaml
 //	├── nmc
 //	└── 05-configure-network.sh
-func (c *Combustion) configureNetwork(ctx *image.Context) (scripts []string, err error) {
+func (c *Combustion) configureNetwork(ctx *context.Context) (scripts []string, err error) {
 	zap.S().Info("Configuring network component...")
 
 	if !isComponentConfigured(ctx, networkConfigDir) {
@@ -99,7 +99,7 @@ func (c *Combustion) configureNetwork(ctx *image.Context) (scripts []string, err
 	return scripts, nil
 }
 
-func (c *Combustion) generateNetworkConfig(ctx *image.Context) error {
+func (c *Combustion) generateNetworkConfig(ctx *context.Context) error {
 	const networkConfigLogFile = "network-config.log"
 
 	logFilename := filepath.Join(ctx.BuildDir, networkConfigLogFile)
@@ -120,7 +120,7 @@ func (c *Combustion) generateNetworkConfig(ctx *image.Context) error {
 	return c.NetworkConfigGenerator.GenerateNetworkConfig(configDir, outputDir, logFile)
 }
 
-func (c *Combustion) installNetworkConfigurator(ctx *image.Context) error {
+func (c *Combustion) installNetworkConfigurator(ctx *context.Context) error {
 	sourcePath := "/usr/bin/nmc"
 	installPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
 

@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,14 +14,14 @@ import (
 
 func TestConfigureSystemd_NoServices(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Systemd: image.Systemd{},
-		},
+	def.OperatingSystem = image.OperatingSystem{
+		Systemd: context.Systemd{},
 	}
+
+	ctx.Definition = def
 
 	// Test
 	scripts, err := configureSystemd(ctx)
@@ -32,17 +33,17 @@ func TestConfigureSystemd_NoServices(t *testing.T) {
 
 func TestConfigureSystemd_BothServiceTypes(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Systemd: image.Systemd{
-				Enable:  []string{"enable0"},
-				Disable: []string{"disable0", "disable1"},
-			},
+	def.OperatingSystem = image.OperatingSystem{
+		Systemd: context.Systemd{
+			Enable:  []string{"enable0"},
+			Disable: []string{"disable0", "disable1"},
 		},
 	}
+
+	ctx.Definition = def
 
 	// Test
 	scripts, err := configureSystemd(ctx)

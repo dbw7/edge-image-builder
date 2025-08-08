@@ -2,13 +2,13 @@ package validation
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 	elementalConfigFilename = "elemental_config.yaml"
 )
 
-func validateElemental(ctx *image.Context) []FailedValidation {
+func validateElemental(ctx *context.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	elementalConfigDir := filepath.Join(ctx.ImageConfigDir, "elemental")
@@ -71,7 +71,7 @@ func validateElementalDir(elementalConfigDir string) []FailedValidation {
 	return failures
 }
 
-func validateElementalConfiguration(ctx *image.Context) []FailedValidation {
+func validateElementalConfiguration(ctx *context.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	rpmDirEntries, err := os.ReadDir(combustion.RPMsPath(ctx))

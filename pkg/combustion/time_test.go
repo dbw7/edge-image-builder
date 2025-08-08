@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,11 +14,13 @@ import (
 
 func TestConfigureTime_NoConf(t *testing.T) {
 	// Setup
-	var ctx image.Context
+	var ctx context.Context
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Time: image.Time{},
+	ctx.Definition = &image.ImageDefinitionAdapter{
+		Definition: &image.Definition{
+			OperatingSystem: image.OperatingSystem{
+				Time: context.Time{},
+			},
 		},
 	}
 
@@ -31,21 +34,21 @@ func TestConfigureTime_NoConf(t *testing.T) {
 
 func TestConfigureTime_FullConfiguration(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Time: image.Time{
-				Timezone: "Europe/London",
-				NtpConfiguration: image.NtpConfiguration{
-					Pools:     []string{"2.suse.pool.ntp.org"},
-					Servers:   []string{"10.0.0.1", "10.0.0.2"},
-					ForceWait: true,
-				},
+	def.OperatingSystem = image.OperatingSystem{
+		Time: context.Time{
+			Timezone: "Europe/London",
+			NtpConfiguration: context.NtpConfiguration{
+				Pools:     []string{"2.suse.pool.ntp.org"},
+				Servers:   []string{"10.0.0.1", "10.0.0.2"},
+				ForceWait: true,
 			},
 		},
 	}
+
+	ctx.Definition = def
 
 	// Test
 	scripts, err := configureTime(ctx)

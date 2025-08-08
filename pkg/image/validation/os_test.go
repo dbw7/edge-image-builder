@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -112,7 +113,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			def := test.Definition
-			ctx := image.Context{
+			ctx := context.Context{
 				ImageDefinition: &def,
 			}
 			failures := validateOperatingSystem(&ctx)

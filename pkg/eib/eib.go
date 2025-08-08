@@ -3,6 +3,8 @@ package eib
 import (
 	"errors"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -19,7 +21,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/container"
 	"github.com/suse-edge/edge-image-builder/pkg/helm"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
@@ -27,7 +28,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Run(ctx *image.Context, rootBuildDir string) error {
+func Run(ctx *context.Context, rootBuildDir string) error {
 	if err := appendKubernetesSELinuxRPMs(ctx); err != nil {
 		log.Auditf("Bootstrapping dependency services failed.")
 		return fmt.Errorf("configuring kubernetes selinux policy: %w", err)
@@ -47,8 +48,8 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 	return builder.Build()
 }
 
-func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
-	if ctx.ImageDefinition.Kubernetes.Version == "" {
+func appendKubernetesSELinuxRPMs(ctx *context.Context) error {
+	if ctx.Definition.GetKubernetes().Version == "" {
 		return nil
 	}
 
@@ -66,17 +67,17 @@ func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 	log.AuditInfo("SELinux is enabled in the Kubernetes configuration. " +
 		"The necessary RPM packages will be downloaded.")
 
-	selinuxPackage, err := kubernetes.SELinuxPackage(ctx.ImageDefinition.Kubernetes.Version, ctx.ArtifactSources)
+	selinuxPackage, err := kubernetes.SELinuxPackage(ctx.Definition.GetKubernetes().Version, ctx.ArtifactSources)
 	if err != nil {
 		return fmt.Errorf("identifying selinux package: %w", err)
 	}
 
-	repository, err := kubernetes.SELinuxRepository(ctx.ImageDefinition.Kubernetes.Version, ctx.ArtifactSources)
+	repository, err := kubernetes.SELinuxRepository(ctx.Definition.GetKubernetes().Version, ctx.ArtifactSources)
 	if err != nil {
 		return fmt.Errorf("identifying selinux repository: %w", err)
 	}
 
-	appendRPMs(ctx, []image.AddRepo{repository}, selinuxPackage)
+	appendRPMs(ctx, []context.AddRepo{repository}, selinuxPackage)
 
 	gpgKeysDir := combustion.GPGKeysPath(ctx)
 	if err = os.MkdirAll(gpgKeysDir, os.ModePerm); err != nil {
@@ -90,7 +91,7 @@ func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 	return nil
 }
 
-func appendElementalRPMs(ctx *image.Context) {
+func appendElementalRPMs(ctx *context.Context) {
 	elementalDir := combustion.ElementalPath(ctx)
 	if _, err := os.Stat(elementalDir); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
@@ -114,12 +115,12 @@ func appendElementalRPMs(ctx *image.Context) {
 	}
 }
 
-func appendFIPS(ctx *image.Context) {
-	fips := ctx.ImageDefinition.OperatingSystem.EnableFIPS
+func appendFIPS(ctx *context.Context) {
+	fips := ctx.Definition.GetOperatingSystem().GetEnableFIPS()
 	if fips {
 		log.AuditInfo("FIPS mode is configured. The necessary RPM packages will be downloaded.")
 
-		packages := ctx.ImageDefinition.OperatingSystem.Packages
+		packages := ctx.Definition.GetOperatingSystem().GetPackages()
 		if packages.RegCode == "" && len(packages.AdditionalRepos) > 0 {
 			log.Audit("WARNING: FIPS enabled with no SUSE registration code provided. Package resolution may fail if additional repositories do not contain the `patterns-base-fips` package.")
 			zap.S().Warn("Detected FIPS for installation with no sccRegistrationCode provided")
@@ -130,31 +131,60 @@ func appendFIPS(ctx *image.Context) {
 	}
 }
 
-func appendRPMs(ctx *image.Context, repos []image.AddRepo, packages ...string) {
-	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
+func appendRPMs(ctx *context.Context, repos []context.AddRepo, packages ...string) {
+	repositories := ctx.Definition.GetOperatingSystem().GetPackages().AdditionalRepos
 	repositories = append(repositories, repos...)
 
-	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
+	packageList := ctx.Definition.GetOperatingSystem().GetPackages().PKGList
 	packageList = append(packageList, packages...)
 
-	ctx.ImageDefinition.OperatingSystem.Packages.PKGList = packageList
-	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
+	def := &image.ImageDefinitionAdapter{
+		Definition: &image.Definition{
+			OperatingSystem: image.OperatingSystem{
+				Packages: context.Packages{
+					PKGList:         packageList,
+					AdditionalRepos: repositories,
+				},
+			},
+		},
+	}
+
+	ctx.Definition = def
 }
 
-func appendHelm(ctx *image.Context) {
+func appendHelm(ctx *context.Context) {
 	componentCharts, componentRepos := combustion.ComponentHelmCharts(ctx)
 
-	ctx.ImageDefinition.Kubernetes.Helm.Charts = append(ctx.ImageDefinition.Kubernetes.Helm.Charts, componentCharts...)
-	ctx.ImageDefinition.Kubernetes.Helm.Repositories = append(ctx.ImageDefinition.Kubernetes.Helm.Repositories, componentRepos...)
+	def := &image.ImageDefinitionAdapter{
+		Definition: &image.Definition{
+			Kubernetes: context.Kubernetes{
+				Helm: context.Helm{
+					Charts:       append(ctx.Definition.GetKubernetes().Helm.Charts, componentCharts...),
+					Repositories: append(ctx.Definition.GetKubernetes().Helm.Repositories, componentRepos...),
+				},
+			},
+		},
+	}
+
+	ctx.Definition = def
 }
 
-func appendKernelArgs(ctx *image.Context, kernelArgs ...string) {
-	kernelArgList := ctx.ImageDefinition.OperatingSystem.KernelArgs
+func appendKernelArgs(ctx *context.Context, kernelArgs ...string) {
+	kernelArgList := ctx.Definition.GetOperatingSystem().GetKernelArgs()
 	kernelArgList = append(kernelArgList, kernelArgs...)
-	ctx.ImageDefinition.OperatingSystem.KernelArgs = kernelArgList
+
+	def := &image.ImageDefinitionAdapter{
+		Definition: &image.Definition{
+			OperatingSystem: image.OperatingSystem{
+				KernelArgs: kernelArgList,
+			},
+		},
+	}
+
+	ctx.Definition = def
 }
 
-func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion, error) {
+func buildCombustion(ctx *context.Context, rootDir string) (*combustion.Combustion, error) {
 	cacheDir := filepath.Join(rootDir, "cache")
 	if err := os.MkdirAll(cacheDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating a cache directory: %w", err)
@@ -177,12 +207,12 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		}
 
 		if !combustion.SkipRPMComponent(ctx) {
-			imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
-			imgType := ctx.ImageDefinition.Image.ImageType
-			luksKey := ctx.ImageDefinition.OperatingSystem.RawConfiguration.LUKSKey
-			baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), luksKey, p)
+			imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.Definition.GetImage().BaseImage)
+			imgType := ctx.Definition.GetImage().ImageType
+			luksKey := ctx.Definition.GetOperatingSystem().GetRawConfiguration().LUKSKey
+			baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.Definition.GetImage().Arch), luksKey, p)
 
-			combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
+			combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.Definition.GetImage().Arch))
 			combustionHandler.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
 		}
 
@@ -196,7 +226,7 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		}
 	}
 
-	if ctx.ImageDefinition.Kubernetes.Version != "" {
+	if ctx.Definition.GetKubernetes().Version != "" {
 		c, err := cache.New(cacheDir)
 		if err != nil {
 			return nil, fmt.Errorf("initialising cache instance: %w", err)

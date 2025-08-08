@@ -1,11 +1,11 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
-func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRepository) {
-	if ctx.ImageDefinition.Kubernetes.Version == "" {
+func ComponentHelmCharts(ctx *context.Context) ([]context.HelmChart, []context.HelmRepository) {
+	if ctx.Definition.GetKubernetes().Version == "" {
 		return nil, nil
 	}
 
@@ -19,11 +19,11 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 		installationNamespace = "kube-system"
 	)
 
-	var charts []image.HelmChart
-	var repos []image.HelmRepository
+	var charts []context.HelmChart
+	var repos []context.HelmRepository
 
-	if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 != "" || ctx.ImageDefinition.Kubernetes.Network.APIVIP6 != "" {
-		metalLBChart := image.HelmChart{
+	if ctx.Definition.GetKubernetes().Network.APIVIP4 != "" || ctx.Definition.GetKubernetes().Network.APIVIP6 != "" {
+		metalLBChart := context.HelmChart{
 			Name:                  ctx.ArtifactSources.MetalLB.Chart,
 			RepositoryName:        metallbRepositoryName,
 			TargetNamespace:       metallbNamespace,
@@ -32,7 +32,7 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 			Version:               ctx.ArtifactSources.MetalLB.Version,
 		}
 
-		endpointCopierOperatorChart := image.HelmChart{
+		endpointCopierOperatorChart := context.HelmChart{
 			Name:                  ctx.ArtifactSources.EndpointCopierOperator.Chart,
 			RepositoryName:        endpointCopierOperatorRepositoryName,
 			TargetNamespace:       endpointCopierOperatorNamespace,
@@ -43,12 +43,12 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 
 		charts = append(charts, metalLBChart, endpointCopierOperatorChart)
 
-		metallbRepo := image.HelmRepository{
+		metallbRepo := context.HelmRepository{
 			Name: metallbRepositoryName,
 			URL:  ctx.ArtifactSources.MetalLB.Repository,
 		}
 
-		endpointCopierOperatorRepo := image.HelmRepository{
+		endpointCopierOperatorRepo := context.HelmRepository{
 			Name: endpointCopierOperatorRepositoryName,
 			URL:  ctx.ArtifactSources.EndpointCopierOperator.Repository,
 		}

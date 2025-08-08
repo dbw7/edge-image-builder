@@ -3,11 +3,11 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
@@ -20,8 +20,8 @@ const (
 //go:embed templates/11-time-setup.sh.tpl
 var timeScript string
 
-func configureTime(ctx *image.Context) ([]string, error) {
-	time := ctx.ImageDefinition.OperatingSystem.Time
+func configureTime(ctx *context.Context) ([]string, error) {
+	time := ctx.Definition.GetOperatingSystem().GetTime()
 	if time.Timezone == "" {
 		log.AuditComponentSkipped(timeComponentName)
 		return nil, nil
@@ -36,7 +36,7 @@ func configureTime(ctx *image.Context) ([]string, error) {
 	return []string{timeScriptName}, nil
 }
 
-func writeTimeCombustionScript(ctx *image.Context) error {
+func writeTimeCombustionScript(ctx *context.Context) error {
 	timeScriptFilename := filepath.Join(ctx.CombustionDir, timeScriptName)
 
 	values := struct {
@@ -45,10 +45,10 @@ func writeTimeCombustionScript(ctx *image.Context) error {
 		Servers   []string
 		ForceWait bool
 	}{
-		Timezone:  ctx.ImageDefinition.OperatingSystem.Time.Timezone,
-		Pools:     ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.Pools,
-		Servers:   ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.Servers,
-		ForceWait: ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.ForceWait,
+		Timezone:  ctx.Definition.GetOperatingSystem().GetTime().Timezone,
+		Pools:     ctx.Definition.GetOperatingSystem().GetTime().NtpConfiguration.Pools,
+		Servers:   ctx.Definition.GetOperatingSystem().GetTime().NtpConfiguration.Servers,
+		ForceWait: ctx.Definition.GetOperatingSystem().GetTime().NtpConfiguration.ForceWait,
 	}
 
 	data, err := template.Parse(timeScriptName, timeScript, values)

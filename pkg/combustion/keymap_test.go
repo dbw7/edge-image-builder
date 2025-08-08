@@ -13,14 +13,14 @@ import (
 
 func TestConfigureKeymap(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Keymap: "gb",
-		},
+	def.OperatingSystem = image.OperatingSystem{
+		Keymap: "gb",
 	}
+
+	ctx.Definition = def
 
 	// Test
 	scripts, err := configureKeymap(ctx)
@@ -47,12 +47,12 @@ func TestConfigureKeymap(t *testing.T) {
 
 func TestConfigureKeymap_NoConf(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{},
-	}
+	def.OperatingSystem = image.OperatingSystem{}
+
+	ctx.Definition = def
 
 	// Test
 	scripts, err := configureKeymap(ctx)

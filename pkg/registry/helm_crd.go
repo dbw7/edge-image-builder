@@ -1,9 +1,8 @@
 package registry
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"strings"
-
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 const (
@@ -31,7 +30,7 @@ type HelmCRD struct {
 	} `yaml:"spec"`
 }
 
-func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryURL string) *HelmCRD {
+func NewHelmCRD(chart *context.HelmChart, chartContent, valuesContent, repositoryURL string) *HelmCRD {
 	// Some OCI registries (incl. oci://registry.suse.com/edge) use a `-chart` suffix
 	// in the names of the charts which may conflict with .Release.Name references.
 	name := strings.TrimSuffix(chart.Name, "-chart")

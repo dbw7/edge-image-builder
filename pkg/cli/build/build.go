@@ -3,6 +3,7 @@ package build
 import (
 	"errors"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -69,7 +70,7 @@ func Run(_ *cli.Context) error {
 		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition, artifactSources)
+	ctx := context.BuildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, *imageDefinition, artifactSources)
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
@@ -109,7 +110,7 @@ func imageConfigDirExists(configDir string) *cmd.Error {
 	}
 }
 
-func parseImageDefinition(configDir, definitionFile string) (*image.Definition, *cmd.Error) {
+func parseImageDefinition(configDir, definitionFile string) (*context.Definition, *cmd.Error) {
 	definitionFilePath := filepath.Join(configDir, definitionFile)
 
 	configData, err := os.ReadFile(definitionFilePath)
@@ -126,9 +127,9 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 		}
 	}
 
-	imageDefinition, err := image.ParseDefinition(configData)
+	imageDefinition, err := image.ParseImageDefinition(configData)
 	if err != nil {
-		if errors.Is(err, image.ErrorInvalidSchemaVersion) {
+		if errors.Is(err, context.ErrorInvalidSchemaVersion) {
 			m := "Invalid schema version specified. This version of Edge Image Builder supports the following schema versions: %s"
 			msg := fmt.Sprintf(m, strings.Join(version.SupportedSchemaVersions, ", "))
 			return nil, &cmd.Error{
@@ -143,10 +144,10 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 		}
 	}
 
-	return imageDefinition, nil
+	return &imageDefinition, nil
 }
 
-func parseArtifactSources() (*image.ArtifactSources, error) {
+func parseArtifactSources() (*context.ArtifactSources, error) {
 	const artifactsConfigFile = "artifacts.yaml"
 
 	b, err := os.ReadFile(artifactsConfigFile)
@@ -158,23 +159,10 @@ func parseArtifactSources() (*image.ArtifactSources, error) {
 		return nil, fmt.Errorf("reading artifact sources file: %w", err)
 	}
 
-	var sources image.ArtifactSources
+	var sources context.ArtifactSources
 	if err = yaml.Unmarshal(b, &sources); err != nil {
 		return nil, fmt.Errorf("decoding artifacts sources: %w", err)
 	}
 
 	return &sources, nil
-}
-
-// Assembles the image build context with user-provided values and implementation defaults.
-func buildContext(buildDir, combustionDir, artefactsDir, configDir string, imageDefinition *image.Definition, artifactSources *image.ArtifactSources) *image.Context {
-	ctx := &image.Context{
-		ImageConfigDir:  configDir,
-		BuildDir:        buildDir,
-		CombustionDir:   combustionDir,
-		ArtefactsDir:    artefactsDir,
-		ImageDefinition: imageDefinition,
-		ArtifactSources: artifactSources,
-	}
-	return ctx
 }

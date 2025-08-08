@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
+func setupContext(t *testing.T) (ctx *context.Context, teardown func()) {
 	// Copied from combustion_test due to time. This should eventually be refactored
 	// to something cleaner.
 
@@ -24,11 +25,11 @@ func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
 	combustionDir, err := os.MkdirTemp("", "eib-combustion-")
 	require.NoError(t, err)
 
-	ctx = &image.Context{
-		ImageConfigDir:  configDir,
-		BuildDir:        buildDir,
-		CombustionDir:   combustionDir,
-		ImageDefinition: &image.Definition{},
+	ctx = &context.Context{
+		ImageConfigDir: configDir,
+		BuildDir:       buildDir,
+		CombustionDir:  combustionDir,
+		Definition:     &image.ImageDefinitionAdapter{&image.Definition{}},
 	}
 
 	return ctx, func() {
@@ -74,10 +75,12 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 	defer teardown()
 	builder := Builder{context: ctx}
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			IsoConfiguration: image.IsoConfiguration{
-				InstallDevice: "/dev/vda",
+	ctx.Definition = &image.ImageDefinitionAdapter{
+		&image.Definition{
+			OperatingSystem: image.OperatingSystem{
+				IsoConfiguration: context.IsoConfiguration{
+					InstallDevice: "/dev/vda",
+				},
 			},
 		},
 	}

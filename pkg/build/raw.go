@@ -34,7 +34,7 @@ func (b *Builder) buildRawImage() error {
 		return fmt.Errorf("retrieving RAW base image size: %w", err)
 	}
 
-	diskSize := b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize.ToMB()
+	diskSize := b.context.Definition.GetOperatingSystem().GetRawConfiguration().DiskSize.ToMB()
 	if diskSize <= imageSize+requiredSpace && requiredSpace >= availableRawDiskSpaceMB {
 		zap.S().Warnf("Insufficient available disk space. The build artifacts require an expansion of the base image by least %d MB. "+
 			"Please specify an appropriate disk size taking into consideration that some of the artifacts may be compressed.",
@@ -49,7 +49,7 @@ func (b *Builder) buildRawImage() error {
 	cmd := b.createRawImageCopyCommand()
 	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("copying the base image %s to the output image location %s: %w",
-			b.context.ImageDefinition.Image.BaseImage, b.generateOutputImageFilename(), err)
+			b.context.Definition.GetImage().BaseImage, b.generateOutputImageFilename(), err)
 	}
 
 	return b.modifyRawImage(b.generateOutputImageFilename(), true, true)
@@ -97,9 +97,9 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		return fmt.Errorf("generating the GRUB configuration commands: %w", err)
 	}
 
-	expandEncryptedPartition := b.context.ImageDefinition.OperatingSystem.RawConfiguration.ExpandEncryptedPartition
+	expandEncryptedPartition := b.context.Definition.GetOperatingSystem().GetRawConfiguration().ExpandEncryptedPartition
 
-	luksKey := b.context.ImageDefinition.OperatingSystem.RawConfiguration.LUKSKey
+	luksKey := b.context.Definition.GetOperatingSystem().GetRawConfiguration().LUKSKey
 
 	// Assemble the template values
 	values := struct {
@@ -120,8 +120,8 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		ConfigureGRUB:            grubConfiguration,
 		ConfigureCombustion:      includeCombustion,
 		RenameFilesystem:         renameFilesystem,
-		DiskSize:                 string(b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize),
-		Arch:                     string(b.context.ImageDefinition.Image.Arch),
+		DiskSize:                 string(b.context.Definition.GetOperatingSystem().GetRawConfiguration().DiskSize),
+		Arch:                     string(b.context.Definition.GetImage().Arch),
 		LUKSKey:                  luksKey,
 		ExpandEncryptedPartition: expandEncryptedPartition,
 	}

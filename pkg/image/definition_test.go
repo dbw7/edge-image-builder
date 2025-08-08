@@ -1,6 +1,7 @@
 package image
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"testing"
 
@@ -15,19 +16,19 @@ func TestParse(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test
-	definition, err := ParseDefinition(configData)
+	definition, err := ParseImageDefinition(configData)
 
 	// Verify
 	require.NoError(t, err)
 
 	// - Definition
-	assert.Equal(t, "1.2", definition.APIVersion)
-	assert.EqualValues(t, "x86_64", definition.Image.Arch)
-	assert.Equal(t, "iso", definition.Image.ImageType)
+	assert.Equal(t, "1.2", definition.GetAPIVersion())
+	assert.EqualValues(t, "x86_64", definition.GetImage().Arch)
+	assert.Equal(t, "iso", definition.GetImage().ImageType)
 
 	// - Image
-	assert.Equal(t, "sl-micro6.0.iso", definition.Image.BaseImage)
-	assert.Equal(t, "eibimage.iso", definition.Image.OutputImageName)
+	assert.Equal(t, "sl-micro6.0.iso", definition.GetImage().BaseImage)
+	assert.Equal(t, "eibimage.iso", definition.GetImage().OutputImageName)
 
 	// - Operating System -> Kernel Arguments
 	expectedKernelArgs := []string{
@@ -35,20 +36,20 @@ func TestParse(t *testing.T) {
 		"beta=bar",
 		"baz",
 	}
-	assert.Equal(t, expectedKernelArgs, definition.OperatingSystem.KernelArgs)
+	assert.Equal(t, expectedKernelArgs, definition.GetOperatingSystem().GetKernelArgs())
 
 	// Operating System -> FIPS
-	enableFIPS := definition.OperatingSystem.EnableFIPS
+	enableFIPS := definition.GetOperatingSystem().GetEnableFIPS()
 	assert.Equal(t, true, enableFIPS)
 
 	// Operating System -> Groups
-	groupConfigs := definition.OperatingSystem.Groups
+	groupConfigs := definition.GetOperatingSystem().GetGroups()
 	require.Len(t, groupConfigs, 2)
 	assert.Equal(t, "group1", groupConfigs[0].Name)
 	assert.Equal(t, "group2", groupConfigs[1].Name)
 
 	// Operating System -> Users
-	userConfigs := definition.OperatingSystem.Users
+	userConfigs := definition.GetOperatingSystem().GetUsers()
 	require.Len(t, userConfigs, 3)
 	assert.Equal(t, "alpha", userConfigs[0].Username)
 	assert.Equal(t, 2000, userConfigs[0].UID)
@@ -79,7 +80,7 @@ func TestParse(t *testing.T) {
 	assert.False(t, userConfigs[2].CreateHomeDir)
 
 	// Operating System -> Systemd
-	systemd := definition.OperatingSystem.Systemd
+	systemd := definition.GetOperatingSystem().GetSystemd()
 	require.Len(t, systemd.Enable, 2)
 	assert.Equal(t, "enable0", systemd.Enable[0])
 	assert.Equal(t, "enable1", systemd.Enable[1])
@@ -87,12 +88,12 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "disable0", systemd.Disable[0])
 
 	// Operating System -> Suma
-	suma := definition.OperatingSystem.Suma
+	suma := definition.GetOperatingSystem().GetSuma()
 	assert.Equal(t, "suma.edge.suse.com", suma.Host)
 	assert.Equal(t, "slemicro55", suma.ActivationKey)
 
 	// Operating System -> Packages
-	pkgConfig := definition.OperatingSystem.Packages
+	pkgConfig := definition.GetOperatingSystem().GetPackages()
 	assert.True(t, pkgConfig.NoGPGCheck)
 	assert.True(t, pkgConfig.EnableExtras)
 	require.Len(t, pkgConfig.PKGList, 6)
@@ -106,7 +107,7 @@ func TestParse(t *testing.T) {
 		"libbpf0",
 	}
 	assert.Equal(t, expectedPKGList, pkgConfig.PKGList)
-	expectedAddRepos := []AddRepo{
+	expectedAddRepos := []context.AddRepo{
 		{
 			URL: "https://download.nvidia.com/suse/sle15sp5/",
 		},
@@ -119,21 +120,21 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 
 	// Operating System -> isoConfiguration
-	installDevice := definition.OperatingSystem.IsoConfiguration.InstallDevice
+	installDevice := definition.GetOperatingSystem().GetIsoConfiguration().InstallDevice
 	assert.Equal(t, "/dev/sda", installDevice)
 
 	// Operating System -> rawConfiguration
-	diskSize := definition.OperatingSystem.RawConfiguration.DiskSize
-	assert.Equal(t, DiskSize("32G"), diskSize)
+	diskSize := definition.GetOperatingSystem().GetRawConfiguration().DiskSize
+	assert.Equal(t, context.DiskSize("32G"), diskSize)
 
-	LUKSKey := definition.OperatingSystem.RawConfiguration.LUKSKey
+	LUKSKey := definition.GetOperatingSystem().GetRawConfiguration().LUKSKey
 	assert.Equal(t, "1234", LUKSKey)
 
-	expand := definition.OperatingSystem.RawConfiguration.ExpandEncryptedPartition
+	expand := definition.GetOperatingSystem().GetRawConfiguration().ExpandEncryptedPartition
 	assert.Equal(t, true, expand)
 
 	// Operating System -> Time
-	time := definition.OperatingSystem.Time
+	time := definition.GetOperatingSystem().GetTime()
 	assert.Equal(t, "Europe/London", time.Timezone)
 	expectedChronyPools := []string{
 		"2.suse.pool.ntp.org",
@@ -146,27 +147,27 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, expectedChronyServers, time.NtpConfiguration.Servers)
 
 	// Operating System -> Proxy -> HTTPProxy
-	httpProxy := definition.OperatingSystem.Proxy.HTTPProxy
+	httpProxy := definition.GetOperatingSystem().GetProxy().HTTPProxy
 	assert.Equal(t, "http://10.0.0.1:3128", httpProxy)
 
 	// Operating System -> Proxy -> HTTPSProxy
-	httpsProxy := definition.OperatingSystem.Proxy.HTTPSProxy
+	httpsProxy := definition.GetOperatingSystem().GetProxy().HTTPSProxy
 	assert.Equal(t, "http://10.0.0.1:3128", httpsProxy)
 
 	// Operating System -> Proxy -> NoProxy
-	noProxy := definition.OperatingSystem.Proxy.NoProxy
+	noProxy := definition.GetOperatingSystem().GetProxy().NoProxy
 	assert.Equal(t, []string{"localhost", "127.0.0.1", "edge.suse.com"}, noProxy)
 
 	// Operating System -> Keymap
-	keymap := definition.OperatingSystem.Keymap
+	keymap := definition.GetOperatingSystem().GetKeymap()
 	assert.Equal(t, "us", keymap)
 
 	// EmbeddedArtifactRegistry
-	embeddedArtifactRegistry := definition.EmbeddedArtifactRegistry
+	embeddedArtifactRegistry := definition.GetEmbeddedArtifactRegistry()
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)
 	assert.Equal(t, "nginx:stable@sha256:b03c8dfc241047d827e1e14d69533205b387d476d97ef7efce58605a6c3acb84", embeddedArtifactRegistry.ContainerImages[1].Name)
 
-	registries := definition.EmbeddedArtifactRegistry.Registries
+	registries := definition.GetEmbeddedArtifactRegistry().Registries
 
 	assert.Equal(t, registries[0].URI, "docker.io")
 	assert.Equal(t, registries[0].Authentication.Username, "user")
@@ -177,7 +178,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, registries[1].Authentication.Password, "suse-pass")
 
 	// Kubernetes
-	kubernetes := definition.Kubernetes
+	kubernetes := definition.GetKubernetes()
 
 	// Version
 	assert.Equal(t, "v1.30.3+rke2r1", kubernetes.Version)
@@ -242,7 +243,7 @@ func TestParseBadConfig_InvalidFormat(t *testing.T) {
 	badData := []byte("Not actually YAML")
 
 	// Test
-	_, err := ParseDefinition(badData)
+	_, err := ParseImageDefinition(badData)
 
 	// Verify
 	require.Error(t, err)
@@ -260,7 +261,7 @@ operatingSystem:
     zone: Europe/London
 `
 
-	_, err := ParseDefinition([]byte(badConfig))
+	_, err := ParseImageDefinition([]byte(badConfig))
 
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "could not parse the image definition")
@@ -273,26 +274,26 @@ func TestParseDefinition_InvalidSchemaVersion(t *testing.T) {
 apiVersion: 10.0
 `
 
-	_, err := ParseDefinition([]byte(badConfig))
+	_, err := ParseImageDefinition([]byte(badConfig))
 
-	require.ErrorIs(t, err, ErrorInvalidSchemaVersion)
+	require.ErrorIs(t, err, context.ErrorInvalidSchemaVersion)
 }
 
 func TestArch_Short(t *testing.T) {
-	assert.Equal(t, "amd64", ArchTypeX86.Short())
-	assert.Equal(t, "arm64", ArchTypeARM.Short())
+	assert.Equal(t, "amd64", context.ArchTypeX86.Short())
+	assert.Equal(t, "arm64", context.ArchTypeARM.Short())
 	assert.PanicsWithValue(t, "unknown arch: abc", func() {
-		arch := Arch("abc")
+		arch := context.Arch("abc")
 		arch.Short()
 	})
 }
 
 func TestDiskSize_ToMB(t *testing.T) {
-	assert.EqualValues(t, 50, DiskSize("50M").ToMB())
-	assert.EqualValues(t, 4096, DiskSize("4G").ToMB())
-	assert.EqualValues(t, 1024*1024, DiskSize("1T").ToMB())
+	assert.EqualValues(t, 50, context.DiskSize("50M").ToMB())
+	assert.EqualValues(t, 4096, context.DiskSize("4G").ToMB())
+	assert.EqualValues(t, 1024*1024, context.DiskSize("1T").ToMB())
 
 	assert.PanicsWithValue(t, "unknown disk size format", func() {
-		DiskSize("10K").ToMB()
+		context.DiskSize("10K").ToMB()
 	})
 }

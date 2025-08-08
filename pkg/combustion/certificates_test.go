@@ -2,17 +2,17 @@ package combustion
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func setupCertificatesConfigDir(t *testing.T) (ctx *image.Context, teardown func()) {
-	ctx, teardown = setupContext(t)
+func setupCertificatesConfigDir(t *testing.T) (ctx *context.Context, teardown func()) {
+	ctx, _, teardown = setupContext(t)
 
 	testCertsDir := filepath.Join(ctx.ImageConfigDir, certsConfigDir)
 	err := os.Mkdir(testCertsDir, 0o755)
@@ -30,7 +30,7 @@ func setupCertificatesConfigDir(t *testing.T) (ctx *image.Context, teardown func
 
 func TestCopyCertificatesEmptyDirectory(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	testCertsDir := filepath.Join(ctx.ImageConfigDir, certsConfigDir)
@@ -68,7 +68,7 @@ func TestCopyCertificates(t *testing.T) {
 
 func TestWriteCertificatesScript(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	// Test

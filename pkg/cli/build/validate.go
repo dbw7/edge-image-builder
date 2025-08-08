@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"slices"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/image/validation"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/urfave/cli/v2"
@@ -48,9 +48,9 @@ func Validate(_ *cli.Context) error {
 		os.Exit(1)
 	}
 
-	ctx := &image.Context{
-		ImageConfigDir:  args.ConfigDir,
-		ImageDefinition: imageDefinition,
+	ctx := &context.Context{
+		ImageConfigDir: args.ConfigDir,
+		Definition:     *imageDefinition,
 	}
 
 	log.AuditInfo("Validating image definition...")
@@ -65,7 +65,7 @@ func Validate(_ *cli.Context) error {
 	return nil
 }
 
-func validateImageDefinition(ctx *image.Context) *cmd.Error {
+func validateImageDefinition(ctx *context.Context) *cmd.Error {
 	failedValidations := validation.ValidateDefinition(ctx)
 	if len(failedValidations) == 0 {
 		return nil

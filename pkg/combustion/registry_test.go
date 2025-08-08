@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,7 +13,7 @@ import (
 
 func TestWriteRegistryScript(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	// Test
@@ -37,32 +38,34 @@ func TestWriteRegistryScript(t *testing.T) {
 func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 	tests := []struct {
 		name         string
-		ctx          *image.Context
+		ctx          *context.Context
 		isConfigured bool
 	}{
 		{
 			name: "Everything Defined",
-			ctx: &image.Context{
-				ImageDefinition: &image.Definition{
-					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
-						ContainerImages: []image.ContainerImage{
-							{
-								Name: "nginx",
-							},
-						},
-					},
-					Kubernetes: image.Kubernetes{
-						Manifests: image.Manifests{
-							URLs: []string{
-								"https://k8s.io/examples/application/nginx-app.yaml",
-							},
-						},
-						Helm: image.Helm{
-							Charts: []image.HelmChart{
+			ctx: &context.Context{
+				Definition: &image.ImageDefinitionAdapter{
+					&image.Definition{
+						EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
+							ContainerImages: []context.ContainerImage{
 								{
-									Name:           "apache",
-									RepositoryName: "apache-repo",
-									Version:        "10.7.0",
+									Name: "nginx",
+								},
+							},
+						},
+						Kubernetes: context.Kubernetes{
+							Manifests: context.Manifests{
+								URLs: []string{
+									"https://k8s.io/examples/application/nginx-app.yaml",
+								},
+							},
+							Helm: context.Helm{
+								Charts: []context.HelmChart{
+									{
+										Name:           "apache",
+										RepositoryName: "apache-repo",
+										Version:        "10.7.0",
+									},
 								},
 							},
 						},
@@ -73,12 +76,14 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Image Defined",
-			ctx: &image.Context{
-				ImageDefinition: &image.Definition{
-					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
-						ContainerImages: []image.ContainerImage{
-							{
-								Name: "nginx",
+			ctx: &context.Context{
+				Definition: &image.ImageDefinitionAdapter{
+					&image.Definition{
+						EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{
+							ContainerImages: []context.ContainerImage{
+								{
+									Name: "nginx",
+								},
 							},
 						},
 					},
@@ -88,12 +93,14 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Manifest URL Defined",
-			ctx: &image.Context{
-				ImageDefinition: &image.Definition{
-					Kubernetes: image.Kubernetes{
-						Manifests: image.Manifests{
-							URLs: []string{
-								"https://k8s.io/examples/application/nginx-app.yaml",
+			ctx: &context.Context{
+				Definition: &image.ImageDefinitionAdapter{
+					&image.Definition{
+						Kubernetes: context.Kubernetes{
+							Manifests: context.Manifests{
+								URLs: []string{
+									"https://k8s.io/examples/application/nginx-app.yaml",
+								},
 							},
 						},
 					},
@@ -103,15 +110,17 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Helm Charts Defined",
-			ctx: &image.Context{
-				ImageDefinition: &image.Definition{
-					Kubernetes: image.Kubernetes{
-						Helm: image.Helm{
-							Charts: []image.HelmChart{
-								{
-									Name:           "apache",
-									RepositoryName: "apache-repo",
-									Version:        "10.7.0",
+			ctx: &context.Context{
+				Definition: &image.ImageDefinitionAdapter{
+					&image.Definition{
+						Kubernetes: context.Kubernetes{
+							Helm: context.Helm{
+								Charts: []context.HelmChart{
+									{
+										Name:           "apache",
+										RepositoryName: "apache-repo",
+										Version:        "10.7.0",
+									},
 								},
 							},
 						},
@@ -122,10 +131,12 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "None Defined",
-			ctx: &image.Context{
-				ImageDefinition: &image.Definition{
-					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{},
-					Kubernetes:               image.Kubernetes{},
+			ctx: &context.Context{
+				Definition: &image.ImageDefinitionAdapter{
+					&image.Definition{
+						EmbeddedArtifactRegistry: context.EmbeddedArtifactRegistry{},
+						Kubernetes:               context.Kubernetes{},
+					},
 				},
 			},
 			isConfigured: false,
@@ -142,7 +153,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 
 func TestWriteRegistryMirrorsValid(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	hostnames := []string{"hello-world:latest", "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1", "quay.io"}

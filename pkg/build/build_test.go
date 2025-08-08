@@ -1,6 +1,7 @@
 package build
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,7 +20,7 @@ func TestGenerateBuildDirFilename(t *testing.T) {
 	}()
 
 	builder := Builder{
-		context: &image.Context{
+		context: &context.Context{
 			BuildDir: tmpDir,
 		},
 	}
@@ -41,11 +42,13 @@ func TestDeleteNoExistingImage(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		context: &image.Context{
+		context: &context.Context{
 			ImageConfigDir: tmpDir,
-			ImageDefinition: &image.Definition{
-				Image: image.Image{
-					OutputImageName: "not-there",
+			Definition: &image.ImageDefinitionAdapter{
+				&image.Definition{
+					Image: context.Image{
+						OutputImageName: "not-there",
+					},
 				},
 			},
 		},
@@ -65,11 +68,13 @@ func TestDeleteExistingImage(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		context: &image.Context{
+		context: &context.Context{
 			ImageConfigDir: tmpDir,
-			ImageDefinition: &image.Definition{
-				Image: image.Image{
-					OutputImageName: "not-there",
+			Definition: &image.ImageDefinitionAdapter{
+				&image.Definition{
+					Image: context.Image{
+						OutputImageName: "not-there",
+					},
 				},
 			},
 		},

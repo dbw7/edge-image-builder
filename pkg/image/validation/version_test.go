@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"github.com/suse-edge/edge-image-builder/context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -157,7 +158,7 @@ func TestValidateVersion(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			imageDef := test.ImageDefinition
-			ctx := image.Context{
+			ctx := context.Context{
 				ImageDefinition: &imageDef,
 			}
 			failedValidations := validateVersion(&ctx)

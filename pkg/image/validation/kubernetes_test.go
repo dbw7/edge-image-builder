@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -131,7 +132,7 @@ func TestValidateKubernetes(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx := image.Context{
+			ctx := context.Context{
 				ImageConfigDir: configDir,
 				ImageDefinition: &image.Definition{
 					Kubernetes: test.K8s,
@@ -1100,7 +1101,7 @@ func TestValidateAdditionalArtifacts(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx := &image.Context{
+			ctx := &context.Context{
 				ImageConfigDir: configDir,
 				ImageDefinition: &image.Definition{
 					Kubernetes: test.K8s,

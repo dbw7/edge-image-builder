@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/context"
 	"slices"
 	"strings"
 
@@ -12,7 +13,7 @@ const (
 	osComponent = "Operating System"
 )
 
-func validateOperatingSystem(ctx *image.Context) []FailedValidation {
+func validateOperatingSystem(ctx *context.Context) []FailedValidation {
 	def := ctx.ImageDefinition
 
 	var failures []FailedValidation

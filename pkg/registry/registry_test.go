@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,14 +19,16 @@ func TestRegistry_New_InvalidManifestURL(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(buildDir))
 	}()
 
-	ctx := &image.Context{
-		BuildDir: buildDir,
-		ImageDefinition: &image.Definition{
-			Kubernetes: image.Kubernetes{
-				Manifests: image.Manifests{
-					URLs: []string{"k8s.io/examples/application/nginx-app.yaml"}},
-			},
+	def := &image.ImageDefinitionAdapter{Definition: &image.Definition{
+		Kubernetes: context.Kubernetes{
+			Manifests: context.Manifests{
+				URLs: []string{"k8s.io/examples/application/nginx-app.yaml"}},
 		},
+	}}
+
+	ctx := &context.Context{
+		BuildDir:   buildDir,
+		Definition: def,
 	}
 
 	_, err := New(ctx, "", nil, "")
@@ -45,7 +48,7 @@ func TestRegistry_ContainerImages(t *testing.T) {
 	require.NoError(t, fileio.CopyFile("testdata/sample-crd.yaml", filepath.Join(manifestsDir, "sample-crd.yaml"), fileio.NonExecutablePerms))
 
 	registry := Registry{
-		embeddedImages: []image.ContainerImage{
+		embeddedImages: []context.ContainerImage{
 			{
 				Name: "hello-world",
 			},
@@ -56,7 +59,7 @@ func TestRegistry_ContainerImages(t *testing.T) {
 		manifestsDir: manifestsDir,
 		helmCharts: []*helmChart{
 			{
-				HelmChart: image.HelmChart{
+				HelmChart: context.HelmChart{
 					Name: "apache",
 				},
 			},
@@ -95,7 +98,7 @@ func TestRegistry_ContainerImages(t *testing.T) {
 }
 
 func TestDeduplicateContainerImages(t *testing.T) {
-	embeddedImages := []image.ContainerImage{
+	embeddedImages := []context.ContainerImage{
 		{
 			Name: "hello-world:latest",
 		},

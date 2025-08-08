@@ -3,6 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io"
 	"os"
 	"os/exec"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/schollz/progressbar/v3"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
@@ -36,7 +36,7 @@ var (
 	k8sRegistryMirrors string
 )
 
-func (c *Combustion) configureRegistry(ctx *image.Context) ([]string, error) {
+func (c *Combustion) configureRegistry(ctx *context.Context) ([]string, error) {
 	if !IsEmbeddedArtifactRegistryConfigured(ctx) {
 		log.AuditComponentSkipped(registryComponentName)
 		return nil, nil
@@ -92,7 +92,7 @@ func generateRegistryTar(imageTarDest string, outputWriter io.Writer) error {
 	return nil
 }
 
-func loginToRegistry(registry image.Registry, outputWriter io.Writer) error {
+func loginToRegistry(registry context.Registry, outputWriter io.Writer) error {
 	args := []string{"login", registry.URI, "--username", registry.Authentication.Username, "--password", registry.Authentication.Password}
 
 	cmd := exec.Command(hauler, args...)
@@ -102,7 +102,7 @@ func loginToRegistry(registry image.Registry, outputWriter io.Writer) error {
 	return cmd.Run()
 }
 
-func writeRegistryScript(ctx *image.Context) (string, error) {
+func writeRegistryScript(ctx *context.Context) (string, error) {
 	values := struct {
 		RegistryPort      string
 		RegistryDir       string
@@ -127,10 +127,10 @@ func writeRegistryScript(ctx *image.Context) (string, error) {
 	return registryScriptName, nil
 }
 
-func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
-	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
-		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
-		len(ctx.ImageDefinition.Kubernetes.Helm.Charts) != 0 ||
+func IsEmbeddedArtifactRegistryConfigured(ctx *context.Context) bool {
+	return len(ctx.Definition.GetEmbeddedArtifactRegistry().ContainerImages) != 0 ||
+		len(ctx.Definition.GetKubernetes().Manifests.URLs) != 0 ||
+		len(ctx.Definition.GetKubernetes().Helm.Charts) != 0 ||
 		isComponentConfigured(ctx, localKubernetesManifestsPath())
 }
 
@@ -149,7 +149,7 @@ func getImageHostnames(containerImages []string) []string {
 	return hostnames
 }
 
-func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
+func writeRegistryMirrors(ctx *context.Context, hostnames []string) error {
 	artefactsPath := kubernetesArtefactsPath(ctx)
 	if err := os.MkdirAll(artefactsPath, os.ModePerm); err != nil {
 		return fmt.Errorf("creating kubernetes artefacts path: %w", err)
@@ -176,12 +176,12 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 	return nil
 }
 
-func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context, containerImages []string) (string, error) {
+func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *context.Context, containerImages []string) (string, error) {
 	if len(containerImages) == 0 {
 		return "", fmt.Errorf("no container images specified")
 	}
 
-	if ctx.ImageDefinition.Kubernetes.Version != "" {
+	if ctx.Definition.GetKubernetes().Version != "" {
 		hostnames := getImageHostnames(containerImages)
 
 		if err := writeRegistryMirrors(ctx, hostnames); err != nil {
@@ -212,11 +212,11 @@ func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context, conta
 	return script, nil
 }
 
-func registryArtefactsPath(ctx *image.Context) string {
+func registryArtefactsPath(ctx *context.Context) string {
 	return filepath.Join(ctx.ArtefactsDir, registryDir)
 }
 
-func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error {
+func (c *Combustion) populateRegistry(ctx *context.Context, images []string) error {
 	imageCacheDir := filepath.Join(ctx.CacheDir, "images")
 	if err := os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating container image cache dir: %w", err)
@@ -236,7 +236,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 		}
 	}()
 
-	for _, registry := range ctx.ImageDefinition.EmbeddedArtifactRegistry.Registries {
+	for _, registry := range ctx.Definition.GetEmbeddedArtifactRegistry().Registries {
 		if err = loginToRegistry(registry, logFile); err != nil {
 			return fmt.Errorf("logging into registry '%s': %w", registry.URI, err)
 		}
@@ -245,7 +245,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 	bar := progressbar.Default(int64(len(images)), "Populating Embedded Artifact Registry...")
 	zap.S().Infof("Adding the following images to the embedded artifact registry:\n%s", images)
 
-	arch := ctx.ImageDefinition.Image.Arch.Short()
+	arch := ctx.Definition.GetImage().Arch.Short()
 
 	for _, img := range images {
 		cacheImage := true

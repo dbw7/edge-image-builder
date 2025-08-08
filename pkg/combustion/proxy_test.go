@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,11 +14,13 @@ import (
 
 func TestConfigureProxy_NoConf(t *testing.T) {
 	// Setup
-	var ctx image.Context
+	var ctx context.Context
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Proxy: image.Proxy{},
+	ctx.Definition = &image.ImageDefinitionAdapter{
+		&image.Definition{
+			OperatingSystem: image.OperatingSystem{
+				Proxy: context.Proxy{},
+			},
 		},
 	}
 
@@ -31,19 +34,18 @@ func TestConfigureProxy_NoConf(t *testing.T) {
 
 func TestConfigureProxy_FullConfiguration(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Proxy: image.Proxy{
-				HTTPProxy:  "http://10.0.0.1:3128",
-				HTTPSProxy: "http://10.0.0.1:3128",
-				NoProxy:    []string{"localhost", "127.0.0.1", "edge.suse.com"},
-			},
+	def.OperatingSystem = image.OperatingSystem{
+		Proxy: context.Proxy{
+			HTTPProxy:  "http://10.0.0.1:3128",
+			HTTPSProxy: "http://10.0.0.1:3128",
+			NoProxy:    []string{"localhost", "127.0.0.1", "edge.suse.com"},
 		},
 	}
 
+	ctx.Definition = def
 	// Test
 	scripts, err := configureProxy(ctx)
 

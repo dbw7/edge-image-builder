@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -17,7 +18,7 @@ const (
 	imageComponent = "Image"
 )
 
-func validateImage(ctx *image.Context) []FailedValidation {
+func validateImage(ctx *context.Context) []FailedValidation {
 	def := ctx.ImageDefinition
 
 	validImageTypes := []string{image.TypeISO, image.TypeRAW}

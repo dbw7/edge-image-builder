@@ -3,6 +3,7 @@
 package registry
 
 import (
+	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -33,7 +34,7 @@ func TestManifestImages(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(buildDir))
 	}()
 
-	ctx := &image.Context{
+	ctx := &context.Context{
 		BuildDir: buildDir,
 		ImageDefinition: &image.Definition{
 			Kubernetes: image.Kubernetes{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	context2 "github.com/suse-edge/edge-image-builder/pkg/context"
 	"io"
 	"io/fs"
 	"net/url"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/http"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -43,12 +43,12 @@ type ArtefactDownloader struct {
 	K3sReleaseURL  string
 }
 
-func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
-	if !strings.Contains(version, image.KubernetesDistroRKE2) {
+func (d ArtefactDownloader) DownloadRKE2Artefacts(arch context2.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+	if !strings.Contains(version, context2.KubernetesDistroRKE2) {
 		return fmt.Errorf("invalid RKE2 version: '%s'", version)
 	}
 
-	if arch == image.ArchTypeARM {
+	if arch == context2.ArchTypeARM {
 		log.Audit("WARNING: RKE2 support for aarch64 platforms is limited and experimental")
 	}
 
@@ -69,7 +69,7 @@ func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni 
 	return nil
 }
 
-func rke2InstallerArtefacts(arch image.Arch) []string {
+func rke2InstallerArtefacts(arch context2.Arch) []string {
 	artefactArch := arch.Short()
 
 	return []string{
@@ -78,7 +78,7 @@ func rke2InstallerArtefacts(arch image.Arch) []string {
 	}
 }
 
-func rke2ImageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]string, error) {
+func rke2ImageArtefacts(cni string, multusEnabled bool, arch context2.Arch) ([]string, error) {
 	artefactArch := arch.Short()
 
 	var artefacts []string
@@ -88,12 +88,12 @@ func rke2ImageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]stri
 	switch cni {
 	case "":
 		return nil, fmt.Errorf("CNI not specified")
-	case image.CNITypeNone:
-	case image.CNITypeCanal:
+	case context2.CNITypeNone:
+	case context2.CNITypeCanal:
 		artefacts = append(artefacts, fmt.Sprintf(rke2CanalImages, artefactArch))
-	case image.CNITypeCalico:
+	case context2.CNITypeCalico:
 		artefacts = append(artefacts, fmt.Sprintf(rke2CalicoImages, artefactArch))
-	case image.CNITypeCilium:
+	case context2.CNITypeCilium:
 		artefacts = append(artefacts, fmt.Sprintf(rke2CiliumImages, artefactArch))
 	default:
 		return nil, fmt.Errorf("unsupported CNI: %s", cni)
@@ -106,8 +106,8 @@ func rke2ImageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]stri
 	return artefacts, nil
 }
 
-func (d ArtefactDownloader) DownloadK3sArtefacts(arch image.Arch, version, installPath, imagesPath string) error {
-	if !strings.Contains(version, image.KubernetesDistroK3S) {
+func (d ArtefactDownloader) DownloadK3sArtefacts(arch context2.Arch, version, installPath, imagesPath string) error {
+	if !strings.Contains(version, context2.KubernetesDistroK3S) {
 		return fmt.Errorf("invalid k3s version: '%s'", version)
 	}
 
@@ -124,11 +124,11 @@ func (d ArtefactDownloader) DownloadK3sArtefacts(arch image.Arch, version, insta
 	return nil
 }
 
-func k3sInstallerArtefacts(arch image.Arch) []string {
+func k3sInstallerArtefacts(arch context2.Arch) []string {
 	artefactArch := arch.Short()
 
 	binary := k3sBinary
-	if arch == image.ArchTypeARM {
+	if arch == context2.ArchTypeARM {
 		binary = fmt.Sprintf("%s-%s", k3sBinary, artefactArch)
 	}
 
@@ -137,7 +137,7 @@ func k3sInstallerArtefacts(arch image.Arch) []string {
 	}
 }
 
-func k3sImageArtefacts(arch image.Arch) []string {
+func k3sImageArtefacts(arch context2.Arch) []string {
 	artefactArch := arch.Short()
 
 	return []string{

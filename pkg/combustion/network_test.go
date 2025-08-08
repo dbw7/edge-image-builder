@@ -48,7 +48,7 @@ func assertNetworkConfigScript(t *testing.T, scriptPath string) {
 }
 
 func TestConfigureNetwork_NotConfigured(t *testing.T) {
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	var c Combustion
@@ -59,7 +59,7 @@ func TestConfigureNetwork_NotConfigured(t *testing.T) {
 }
 
 func TestConfigureNetwork_EmptyDirectory(t *testing.T) {
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
@@ -118,7 +118,7 @@ func TestConfigureNetwork(t *testing.T) {
 		},
 	}
 
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
@@ -151,7 +151,7 @@ func TestConfigureNetwork(t *testing.T) {
 }
 
 func TestConfigureNetwork_CustomScript(t *testing.T) {
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	c := Combustion{

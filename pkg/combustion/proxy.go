@@ -3,12 +3,12 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
@@ -21,8 +21,8 @@ const (
 //go:embed templates/08-proxy-setup.sh.tpl
 var proxyScript string
 
-func configureProxy(ctx *image.Context) ([]string, error) {
-	proxy := ctx.ImageDefinition.OperatingSystem.Proxy
+func configureProxy(ctx *context.Context) ([]string, error) {
+	proxy := ctx.Definition.GetOperatingSystem().GetProxy()
 	if proxy.HTTPProxy == "" && proxy.HTTPSProxy == "" {
 		log.AuditComponentSkipped(proxyComponentName)
 		return nil, nil
@@ -37,7 +37,7 @@ func configureProxy(ctx *image.Context) ([]string, error) {
 	return []string{proxyScriptName}, nil
 }
 
-func writeProxyCombustionScript(ctx *image.Context) error {
+func writeProxyCombustionScript(ctx *context.Context) error {
 	proxyScriptFilename := filepath.Join(ctx.CombustionDir, proxyScriptName)
 
 	values := struct {
@@ -45,9 +45,9 @@ func writeProxyCombustionScript(ctx *image.Context) error {
 		HTTPSProxy string
 		NoProxy    string
 	}{
-		HTTPProxy:  ctx.ImageDefinition.OperatingSystem.Proxy.HTTPProxy,
-		HTTPSProxy: ctx.ImageDefinition.OperatingSystem.Proxy.HTTPSProxy,
-		NoProxy:    strings.Join(ctx.ImageDefinition.OperatingSystem.Proxy.NoProxy, ", "),
+		HTTPProxy:  ctx.Definition.GetOperatingSystem().GetProxy().HTTPProxy,
+		HTTPSProxy: ctx.Definition.GetOperatingSystem().GetProxy().HTTPSProxy,
+		NoProxy:    strings.Join(ctx.Definition.GetOperatingSystem().GetProxy().NoProxy, ", "),
 	}
 
 	data, err := template.Parse(proxyScriptName, proxyScript, values)

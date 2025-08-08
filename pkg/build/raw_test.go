@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,15 +16,17 @@ import (
 
 func TestCreateRawImageCopyCommand(t *testing.T) {
 	// Setup
+	def := &image.Definition{
+		Image: context.Image{
+			BaseImage:       "base-image",
+			OutputImageName: "build-image",
+		},
+	}
+
 	builder := Builder{
-		context: &image.Context{
+		context: &context.Context{
 			ImageConfigDir: "config-dir",
-			ImageDefinition: &image.Definition{
-				Image: image.Image{
-					BaseImage:       "base-image",
-					OutputImageName: "build-image",
-				},
-			},
+			Definition:     &image.ImageDefinitionAdapter{Definition: def},
 		},
 	}
 
@@ -47,25 +50,28 @@ func TestWriteModifyScript(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		Image: image.Image{
-			OutputImageName: "output-image",
+	def := &image.Definition{
+		Image: context.Image{
+			BaseImage:       "base-image",
+			OutputImageName: "build-image",
 		},
 	}
+
+	ctx.Definition = &image.ImageDefinitionAdapter{Definition: def}
 
 	builder := Builder{context: ctx}
 	outputImageFilename := builder.generateOutputImageFilename()
 
 	raw := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
-		RawConfiguration: image.RawConfiguration{
+		RawConfiguration: context.RawConfiguration{
 			DiskSize: "64G",
 		},
 	}
 
 	iso := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
-		IsoConfiguration: image.IsoConfiguration{
+		IsoConfiguration: context.IsoConfiguration{
 			InstallDevice: "/dev/sda",
 		},
 	}
@@ -73,7 +79,7 @@ func TestWriteModifyScript(t *testing.T) {
 	luksKey := "1234"
 	encryptedRaw := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
-		RawConfiguration: image.RawConfiguration{
+		RawConfiguration: context.RawConfiguration{
 			LUKSKey:  luksKey,
 			DiskSize: "64G",
 		},
@@ -81,7 +87,7 @@ func TestWriteModifyScript(t *testing.T) {
 
 	encryptedRawExpand := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
-		RawConfiguration: image.RawConfiguration{
+		RawConfiguration: context.RawConfiguration{
 			LUKSKey:                  luksKey,
 			ExpandEncryptedPartition: true,
 			DiskSize:                 "64G",
@@ -163,7 +169,7 @@ func TestWriteModifyScript(t *testing.T) {
 	// Test
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx.ImageDefinition.OperatingSystem = *test.operatingSystem
+			def.OperatingSystem = *test.operatingSystem
 			err := builder.writeModifyScript(outputImageFilename, test.includeCombustion, test.renameFilesystem)
 			require.NoError(t, err)
 
@@ -189,7 +195,7 @@ func TestWriteModifyScript(t *testing.T) {
 func TestCreateModifyCommand(t *testing.T) {
 	// Setup
 	builder := Builder{
-		context: &image.Context{
+		context: &context.Context{
 			BuildDir: "build-dir",
 		},
 	}

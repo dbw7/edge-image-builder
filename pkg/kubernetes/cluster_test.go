@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"net/netip"
 	"path/filepath"
 	"testing"
@@ -8,13 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestNewCluster_SingleNodeRKE2_MissingConfig(t *testing.T) {
-	kubernetes := &image.Kubernetes{
+	kubernetes := &context.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: image.Network{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP4: "192.168.122.50",
 		},
@@ -37,9 +37,9 @@ func TestNewCluster_SingleNodeRKE2_MissingConfig(t *testing.T) {
 }
 
 func TestNewCluster_SingleNodeK3s_MissingConfig(t *testing.T) {
-	kubernetes := &image.Kubernetes{
+	kubernetes := &context.Kubernetes{
 		Version: "v1.30.3+k3s1",
-		Network: image.Network{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP4: "192.168.122.50",
 		},
@@ -62,8 +62,8 @@ func TestNewCluster_SingleNodeK3s_MissingConfig(t *testing.T) {
 }
 
 func TestNewCluster_SingleNode_ExistingConfig(t *testing.T) {
-	kubernetes := &image.Kubernetes{
-		Network: image.Network{
+	kubernetes := &context.Kubernetes{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP4: "192.168.122.50",
 		},
@@ -85,8 +85,8 @@ func TestNewCluster_SingleNode_ExistingConfig(t *testing.T) {
 }
 
 func TestNewCluster_SingleNode_ExistingConfigIPv6(t *testing.T) {
-	kubernetes := &image.Kubernetes{
-		Network: image.Network{
+	kubernetes := &context.Kubernetes{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP6: "fd12:3456:789a::21",
 		},
@@ -108,8 +108,8 @@ func TestNewCluster_SingleNode_ExistingConfigIPv6(t *testing.T) {
 }
 
 func TestNewCluster_SingleNode_ExistingConfigDualstack(t *testing.T) {
-	kubernetes := &image.Kubernetes{
-		Network: image.Network{
+	kubernetes := &context.Kubernetes{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP4: "192.168.122.50",
 			APIVIP6: "fd12:3456:789a::21",
@@ -132,13 +132,13 @@ func TestNewCluster_SingleNode_ExistingConfigDualstack(t *testing.T) {
 }
 
 func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
-	kubernetes := &image.Kubernetes{
+	kubernetes := &context.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: image.Network{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP4: "192.168.122.50",
 		},
-		Nodes: []image.Node{
+		Nodes: []context.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -182,13 +182,13 @@ func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
 }
 
 func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
-	kubernetes := &image.Kubernetes{
+	kubernetes := &context.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: image.Network{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP4: "192.168.122.50",
 		},
-		Nodes: []image.Node{
+		Nodes: []context.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -231,13 +231,13 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 }
 
 func TestNewCluster_MultiNodeRKE2_ExistingConfigIPv6(t *testing.T) {
-	kubernetes := &image.Kubernetes{
+	kubernetes := &context.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: image.Network{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP6: "fd12:3456:789a::21",
 		},
-		Nodes: []image.Node{
+		Nodes: []context.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -280,14 +280,14 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfigIPv6(t *testing.T) {
 }
 
 func TestNewCluster_MultiNodeRKE2_ExistingConfigDualstackPrioritizeIPv6(t *testing.T) {
-	kubernetes := &image.Kubernetes{
+	kubernetes := &context.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: image.Network{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP4: "192.168.122.50",
 			APIVIP6: "fd12:3456:789a::21",
 		},
-		Nodes: []image.Node{
+		Nodes: []context.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -330,14 +330,14 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfigDualstackPrioritizeIPv6(t *testi
 }
 
 func TestNewCluster_MultiNodeRKE2_ExistingConfigDualstackPrioritizeIPv4(t *testing.T) {
-	kubernetes := &image.Kubernetes{
+	kubernetes := &context.Kubernetes{
 		Version: "v1.30.3+rke2r1",
-		Network: image.Network{
+		Network: context.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP4: "192.168.122.50",
 			APIVIP6: "fd12:3456:789a::21",
 		},
-		Nodes: []image.Node{
+		Nodes: []context.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "server",
@@ -380,8 +380,8 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfigDualstackPrioritizeIPv4(t *testi
 }
 
 func TestNewCluster_MultiNode_MissingInitialiser(t *testing.T) {
-	kubernetes := &image.Kubernetes{
-		Nodes: []image.Node{
+	kubernetes := &context.Kubernetes{
+		Nodes: []context.Node{
 			{
 				Hostname: "node1.suse.com",
 				Type:     "agent",
@@ -402,7 +402,7 @@ func TestNewCluster_MultiNode_MissingInitialiser(t *testing.T) {
 func TestIdentifyInitialiserNode(t *testing.T) {
 	tests := []struct {
 		name         string
-		nodes        []image.Node
+		nodes        []context.Node
 		expectedNode string
 	}{
 		{
@@ -411,7 +411,7 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 		},
 		{
 			name: "Agent list",
-			nodes: []image.Node{
+			nodes: []context.Node{
 				{
 					Hostname: "host1",
 					Type:     "agent",
@@ -426,7 +426,7 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 		},
 		{
 			name: "Server node labeled as initialiser",
-			nodes: []image.Node{
+			nodes: []context.Node{
 				{
 					Hostname: "host1",
 					Type:     "agent",
@@ -445,7 +445,7 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 		},
 		{
 			name: "Initialiser as first server node in list",
-			nodes: []image.Node{
+			nodes: []context.Node{
 				{
 					Hostname: "host1",
 					Type:     "agent",
@@ -465,7 +465,7 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			kubernetes := &image.Kubernetes{Nodes: test.nodes}
+			kubernetes := &context.Kubernetes{Nodes: test.nodes}
 			assert.Equal(t, test.expectedNode, identifyInitialiserNode(kubernetes))
 		})
 	}
@@ -621,7 +621,7 @@ func TestAppendClusterDisabledServices(t *testing.T) {
 }
 
 func TestServersCount(t *testing.T) {
-	nodes := []image.Node{
+	nodes := []context.Node{
 		{
 			Hostname: "node1",
 			Type:     "server",
@@ -637,5 +637,5 @@ func TestServersCount(t *testing.T) {
 	}
 
 	assert.Equal(t, 2, ServersCount(nodes))
-	assert.Equal(t, 0, ServersCount([]image.Node{}))
+	assert.Equal(t, 0, ServersCount([]context.Node{}))
 }

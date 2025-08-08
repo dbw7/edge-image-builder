@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestValidateElementalNoDir(t *testing.T) {
-	ctx := image.Context{}
+	ctx := context.Context{}
 
 	failures := validateElemental(&ctx)
 	assert.Len(t, failures, 0)
@@ -55,7 +56,7 @@ func TestValidateElemental(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx := image.Context{
+			ctx := context.Context{
 				ImageConfigDir:  configDir,
 				ImageDefinition: test.ImageDefinition,
 			}
@@ -158,7 +159,7 @@ func TestValidateElementalConfigurationManualRPMsNoRegistrationCode(t *testing.T
 		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	ctx := &image.Context{
+	ctx := &context.Context{
 		ImageConfigDir:  configDir,
 		ImageDefinition: &image.Definition{},
 	}
@@ -190,7 +191,7 @@ func TestValidateElementalConfigurationManualRPMsWithRegistrationCode(t *testing
 		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	ctx := &image.Context{
+	ctx := &context.Context{
 		ImageConfigDir: configDir,
 		ImageDefinition: &image.Definition{
 			OperatingSystem: image.OperatingSystem{
@@ -228,7 +229,7 @@ func TestValidateElementalConfigurationManualRPMsMissingAgent(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	ctx := &image.Context{
+	ctx := &context.Context{
 		ImageConfigDir:  configDir,
 		ImageDefinition: &image.Definition{},
 	}
@@ -259,7 +260,7 @@ func TestValidateElementalConfigurationManualRPMsMissingRegister(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	ctx := &image.Context{
+	ctx := &context.Context{
 		ImageConfigDir:  configDir,
 		ImageDefinition: &image.Definition{},
 	}

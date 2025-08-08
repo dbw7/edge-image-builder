@@ -3,12 +3,12 @@ package resolver
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/mount"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
@@ -81,7 +81,7 @@ func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilde
 // - localRPMConfig - configuration for locally provided RPMs
 //
 // - outputDir - directory in which the resolver will create a directory containing the resolved rpms.
-func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error) {
+func (r *Resolver) Resolve(packages *context.Packages, localRPMConfig *context.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error) {
 	zap.L().Info("Resolving package dependencies...")
 
 	revert, err := mount.DisableDefaultMounts(r.overrideMountsPath)
@@ -122,7 +122,7 @@ func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.Local
 	return filepath.Join(outputDir, rpmRepoName), r.generatePKGInstallList(packages), nil
 }
 
-func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image.Packages) error {
+func (r *Resolver) prepare(localRPMConfig *context.LocalRPMConfig, packages *context.Packages) error {
 	zap.L().Info("Preparing resolver image context...")
 
 	buildContext := r.generateBuildContextPath()
@@ -148,7 +148,7 @@ func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image
 	return nil
 }
 
-func (r *Resolver) prepareLocalRPMs(localRPMConfig *image.LocalRPMConfig) error {
+func (r *Resolver) prepareLocalRPMs(localRPMConfig *context.LocalRPMConfig) error {
 	rpmDest := r.generateRPMPathInBuildContext()
 	if err := fileio.CopyFiles(localRPMConfig.RPMPath, rpmDest, ".rpm", false, &fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("copying local rpms to %s: %w", rpmDest, err)
@@ -179,10 +179,10 @@ func (r *Resolver) prepareLocalRPMs(localRPMConfig *image.LocalRPMConfig) error 
 	return nil
 }
 
-func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig, packages *image.Packages) error {
+func (r *Resolver) writeRPMResolutionScript(localRPMConfig *context.LocalRPMConfig, packages *context.Packages) error {
 	values := struct {
 		RegCode      string
-		AddRepo      []image.AddRepo
+		AddRepo      []context.AddRepo
 		CacheDir     string
 		PKGList      string
 		LocalRPMList string
@@ -220,7 +220,7 @@ func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig
 	return os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 }
 
-func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig) error {
+func (r *Resolver) writeDockerfile(localRPMConfig *context.LocalRPMConfig) error {
 	values := struct {
 		BaseImage               string
 		FromRPMPath             string
@@ -252,7 +252,7 @@ func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig) error {
 	return os.WriteFile(filename, []byte(data), fileio.NonExecutablePerms)
 }
 
-func (r *Resolver) generatePKGInstallList(packages *image.Packages) []string {
+func (r *Resolver) generatePKGInstallList(packages *context.Packages) []string {
 	list := []string{}
 
 	if len(packages.PKGList) > 0 {

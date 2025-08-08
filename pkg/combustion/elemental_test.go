@@ -1,17 +1,17 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func setupElementalConfigDir(t *testing.T) (ctx *image.Context, teardown func()) {
-	ctx, teardownCtx := setupContext(t)
+func setupElementalConfigDir(t *testing.T) (ctx *context.Context, teardown func()) {
+	ctx, _, teardownCtx := setupContext(t)
 
 	testConfigDir := filepath.Join(ctx.ImageConfigDir, elementalConfigDir)
 	err := os.Mkdir(testConfigDir, 0o755)
@@ -46,7 +46,7 @@ func TestCopyElementalConfigFile(t *testing.T) {
 
 func TestWriteElementalCombustionScript(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	// Test

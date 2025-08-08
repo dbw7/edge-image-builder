@@ -3,11 +3,11 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
@@ -20,14 +20,14 @@ const (
 //go:embed templates/13a-add-groups.sh.tpl
 var groupsScript string
 
-func configureGroups(ctx *image.Context) ([]string, error) {
+func configureGroups(ctx *context.Context) ([]string, error) {
 	// Punch out early if there are no groups
-	if len(ctx.ImageDefinition.OperatingSystem.Groups) == 0 {
+	if len(ctx.Definition.GetOperatingSystem().GetGroups()) == 0 {
 		log.AuditComponentSkipped(groupsComponentName)
 		return nil, nil
 	}
 
-	data, err := template.Parse(groupsScriptName, groupsScript, ctx.ImageDefinition.OperatingSystem.Groups)
+	data, err := template.Parse(groupsScriptName, groupsScript, ctx.Definition.GetOperatingSystem().GetGroups())
 	if err != nil {
 		log.AuditComponentFailed(groupsComponentName)
 		return nil, fmt.Errorf("parsing the group script template: %w", err)

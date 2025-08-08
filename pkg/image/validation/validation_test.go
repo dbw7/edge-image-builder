@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"github.com/suse-edge/edge-image-builder/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -94,7 +95,7 @@ func TestValidateDefinition(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			def := test.Definition
-			ctx := image.Context{
+			ctx := context.Context{
 				ImageDefinition: &def,
 				ImageConfigDir:  configDir,
 			}

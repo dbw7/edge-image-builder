@@ -1,16 +1,17 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
+func setupContext(t *testing.T) (ctx *context.Context, def *image.ImageDefinitionAdapter, teardown func()) {
 	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
 
@@ -23,15 +24,19 @@ func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
 	artefactsDir, err := os.MkdirTemp("", "eib-artefacts-")
 	require.NoError(t, err)
 
-	ctx = &image.Context{
-		ImageConfigDir:  configDir,
-		BuildDir:        buildDir,
-		CombustionDir:   combustionDir,
-		ArtefactsDir:    artefactsDir,
-		ImageDefinition: &image.Definition{},
+	def = &image.ImageDefinitionAdapter{
+		Definition: &image.Definition{},
 	}
 
-	return ctx, func() {
+	ctx = &context.Context{
+		ImageConfigDir: configDir,
+		BuildDir:       buildDir,
+		CombustionDir:  combustionDir,
+		ArtefactsDir:   artefactsDir,
+		Definition:     def,
+	}
+
+	return ctx, def, func() {
 		assert.NoError(t, os.RemoveAll(combustionDir))
 		assert.NoError(t, os.RemoveAll(buildDir))
 		assert.NoError(t, os.RemoveAll(artefactsDir))
@@ -41,7 +46,7 @@ func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
 
 func TestGenerateComponentPath(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	componentDir := filepath.Join(ctx.ImageConfigDir, "some-component")
@@ -55,7 +60,7 @@ func TestGenerateComponentPath(t *testing.T) {
 }
 
 func TestIsComponentConfigured(t *testing.T) {
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	componentDir := filepath.Join(ctx.ImageConfigDir, "existing-component")

@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,22 +14,22 @@ import (
 
 func TestConfigureGroups(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Groups: []image.OperatingSystemGroup{
-				{
-					Name: "group1",
-					GID:  1000,
-				},
-				{
-					Name: "group2",
-				},
+	def.OperatingSystem = image.OperatingSystem{
+		Groups: []context.OperatingSystemGroup{
+			{
+				Name: "group1",
+				GID:  1000,
+			},
+			{
+				Name: "group2",
 			},
 		},
 	}
+
+	ctx.Definition = def
 
 	// Test
 	scripts, err := configureGroups(ctx)

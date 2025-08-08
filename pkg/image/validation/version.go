@@ -2,10 +2,9 @@ package validation
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/context"
 	"reflect"
 	"strings"
-
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 const (
@@ -35,7 +34,7 @@ var definitionFields = map[string][]imageDefinitionField{
 	},
 }
 
-func validateVersion(ctx *image.Context) []FailedValidation {
+func validateVersion(ctx *context.Context) []FailedValidation {
 	var failures []FailedValidation
 	var rootValue = reflect.ValueOf(ctx.ImageDefinition)
 

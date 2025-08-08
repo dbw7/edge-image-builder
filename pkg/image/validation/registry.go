@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/context"
 
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -11,7 +12,7 @@ const (
 	registryComponent = "Artifact Registry"
 )
 
-func validateEmbeddedArtifactRegistry(ctx *image.Context) []FailedValidation {
+func validateEmbeddedArtifactRegistry(ctx *context.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	failures = append(failures, validateRegistries(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)

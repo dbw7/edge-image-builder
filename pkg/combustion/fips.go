@@ -3,11 +3,11 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
@@ -23,8 +23,8 @@ var (
 	FIPSKernelArgs = []string{"fips=1"}
 )
 
-func configureFIPS(ctx *image.Context) ([]string, error) {
-	fips := ctx.ImageDefinition.OperatingSystem.EnableFIPS
+func configureFIPS(ctx *context.Context) ([]string, error) {
+	fips := ctx.Definition.GetOperatingSystem().GetEnableFIPS()
 	if !fips {
 		log.AuditComponentSkipped(fipsComponentName)
 		return nil, nil
@@ -39,7 +39,7 @@ func configureFIPS(ctx *image.Context) ([]string, error) {
 	return []string{fipsScriptName}, nil
 }
 
-func writeFIPSCombustionScript(ctx *image.Context) error {
+func writeFIPSCombustionScript(ctx *context.Context) error {
 	fipsScriptFilename := filepath.Join(ctx.CombustionDir, fipsScriptName)
 
 	if err := os.WriteFile(fipsScriptFilename, []byte(fipsScript), fileio.ExecutablePerms); err != nil {

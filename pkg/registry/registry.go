@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	context2 "github.com/suse-edge/edge-image-builder/pkg/context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -12,25 +13,24 @@ import (
 	"github.com/schollz/progressbar/v3"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/http"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"go.uber.org/zap"
 )
 
 type helmClient interface {
-	AddRepo(repository *image.HelmRepository) error
-	RegistryLogin(repository *image.HelmRepository) error
-	Pull(chart string, repository *image.HelmRepository, version, destDir string) (string, error)
+	AddRepo(repository *context2.HelmRepository) error
+	RegistryLogin(repository *context2.HelmRepository) error
+	Pull(chart string, repository *context2.HelmRepository, version, destDir string) (string, error)
 	Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, apiVersions []string) ([]map[string]any, error)
 }
 
 type helmChart struct {
-	image.HelmChart
+	context2.HelmChart
 	localPath     string
 	repositoryURL string
 }
 
 type Registry struct {
-	embeddedImages []image.ContainerImage
+	embeddedImages []context2.ContainerImage
 	manifestsDir   string
 	helmClient     helmClient
 	helmCharts     []*helmChart
@@ -38,7 +38,7 @@ type Registry struct {
 	kubeVersion    string
 }
 
-func New(ctx *image.Context, localManifestsDir string, helmClient helmClient, helmValuesDir string) (*Registry, error) {
+func New(ctx *context2.Context, localManifestsDir string, helmClient helmClient, helmValuesDir string) (*Registry, error) {
 	manifestsDir, err := storeManifests(ctx, localManifestsDir)
 	if err != nil {
 		return nil, fmt.Errorf("storing manifests: %w", err)
@@ -50,12 +50,12 @@ func New(ctx *image.Context, localManifestsDir string, helmClient helmClient, he
 	}
 
 	return &Registry{
-		embeddedImages: ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages,
+		embeddedImages: ctx.Definition.GetEmbeddedArtifactRegistry().ContainerImages,
 		manifestsDir:   manifestsDir,
 		helmClient:     helmClient,
 		helmCharts:     charts,
 		helmValuesDir:  helmValuesDir,
-		kubeVersion:    ctx.ImageDefinition.Kubernetes.Version,
+		kubeVersion:    ctx.Definition.GetKubernetes().Version,
 	}, nil
 }
 
@@ -63,14 +63,14 @@ func (r *Registry) ManifestsPath() string {
 	return r.manifestsDir
 }
 
-func storeManifests(ctx *image.Context, localManifestsDir string) (string, error) {
+func storeManifests(ctx *context2.Context, localManifestsDir string) (string, error) {
 	const manifestsDir = "manifests"
 
 	var manifestsPathPopulated bool
 
 	manifestsDestDir := filepath.Join(ctx.BuildDir, manifestsDir)
 
-	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
+	manifestURLs := ctx.Definition.GetKubernetes().Manifests.URLs
 	if len(manifestURLs) != 0 {
 		if err := os.MkdirAll(manifestsDestDir, os.ModePerm); err != nil {
 			return "", fmt.Errorf("creating manifests dir: %w", err)
@@ -104,8 +104,8 @@ func storeManifests(ctx *image.Context, localManifestsDir string) (string, error
 	return manifestsDestDir, nil
 }
 
-func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, error) {
-	helm := &ctx.ImageDefinition.Kubernetes.Helm
+func storeHelmCharts(ctx *context2.Context, helmClient helmClient) ([]*helmChart, error) {
+	helm := &ctx.Definition.GetKubernetes().Helm
 
 	if len(helm.Charts) == 0 {
 		return nil, nil
@@ -153,8 +153,8 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 	return charts, nil
 }
 
-func mapChartsToRepos(helm *image.Helm) map[string]*image.HelmRepository {
-	chartRepoMap := make(map[string]*image.HelmRepository)
+func mapChartsToRepos(helm *context2.Helm) map[string]*context2.HelmRepository {
+	chartRepoMap := make(map[string]*context2.HelmRepository)
 
 	for i := range helm.Charts {
 		for j := range helm.Repositories {
@@ -167,7 +167,7 @@ func mapChartsToRepos(helm *image.Helm) map[string]*image.HelmRepository {
 	return chartRepoMap
 }
 
-func downloadChart(helmClient helmClient, chart *image.HelmChart, repo *image.HelmRepository, destDir string) (string, error) {
+func downloadChart(helmClient helmClient, chart *context2.HelmChart, repo *context2.HelmRepository, destDir string) (string, error) {
 	if strings.HasPrefix(repo.URL, "http") {
 		if err := helmClient.AddRepo(repo); err != nil {
 			return "", fmt.Errorf("adding repo: %w", err)
@@ -200,7 +200,7 @@ func (r *Registry) ContainerImages() ([]string, error) {
 	return deduplicateContainerImages(r.embeddedImages, manifestImages, chartImages), nil
 }
 
-func deduplicateContainerImages(embeddedImages []image.ContainerImage, manifestImages, chartImages []string) []string {
+func deduplicateContainerImages(embeddedImages []context2.ContainerImage, manifestImages, chartImages []string) []string {
 	imageSet := map[string]bool{}
 
 	for _, img := range embeddedImages {

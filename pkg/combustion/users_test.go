@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,39 +14,39 @@ import (
 
 func TestConfigureUsers(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, def, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-			Users: []image.OperatingSystemUser{
-				{
-					Username:          "alpha",
-					UID:               2000,
-					EncryptedPassword: "alpha123",
-					SSHKeys:           []string{"alphakey1", "alphakey2"},
-					PrimaryGroup:      "alphagroup",
-					SecondaryGroups:   []string{"group1", "group2"},
-					CreateHomeDir:     true,
-				},
-				{
-					Username:          "beta",
-					EncryptedPassword: "beta123",
-					SecondaryGroups:   []string{"group3"},
-					CreateHomeDir:     false,
-				},
-				{
-					Username: "gamma",
-					SSHKeys:  []string{"gammakey"},
-				},
-				{
-					Username:          "root",
-					EncryptedPassword: "root123",
-					SSHKeys:           []string{"rootkey1", "rootkey2"},
-				},
+	def.OperatingSystem = image.OperatingSystem{
+		Users: []context.OperatingSystemUser{
+			{
+				Username:          "alpha",
+				UID:               2000,
+				EncryptedPassword: "alpha123",
+				SSHKeys:           []string{"alphakey1", "alphakey2"},
+				PrimaryGroup:      "alphagroup",
+				SecondaryGroups:   []string{"group1", "group2"},
+				CreateHomeDir:     true,
+			},
+			{
+				Username:          "beta",
+				EncryptedPassword: "beta123",
+				SecondaryGroups:   []string{"group3"},
+				CreateHomeDir:     false,
+			},
+			{
+				Username: "gamma",
+				SSHKeys:  []string{"gammakey"},
+			},
+			{
+				Username:          "root",
+				EncryptedPassword: "root123",
+				SSHKeys:           []string{"rootkey1", "rootkey2"},
 			},
 		},
 	}
+
+	ctx.Definition = def
 
 	// Test
 	scripts, err := configureUsers(ctx)
@@ -99,7 +100,7 @@ func TestConfigureUsers(t *testing.T) {
 
 func TestConfigureUsers_NoUsers(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	// Test

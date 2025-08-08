@@ -3,6 +3,7 @@ package validation
 import (
 	"errors"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/context"
 	"net/netip"
 	"net/url"
 	"os"
@@ -25,7 +26,7 @@ const (
 
 var validNodeTypes = []string{image.KubernetesNodeTypeServer, image.KubernetesNodeTypeAgent}
 
-func validateKubernetes(ctx *image.Context) []FailedValidation {
+func validateKubernetes(ctx *context.Context) []FailedValidation {
 	def := ctx.ImageDefinition
 
 	var failures []FailedValidation
@@ -684,7 +685,7 @@ func validateHelmChartDuplicates(charts []image.HelmChart) []FailedValidation {
 	return failures
 }
 
-func validateAdditionalArtifacts(ctx *image.Context) []FailedValidation {
+func validateAdditionalArtifacts(ctx *context.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	dirEntries, err := os.ReadDir(combustion.KubernetesManifestsPath(ctx))

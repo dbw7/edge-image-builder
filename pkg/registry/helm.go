@@ -3,10 +3,9 @@ package registry
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
-
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func (r *Registry) HelmCharts() ([]*HelmCRD, error) {
@@ -56,7 +55,7 @@ func (r *Registry) helmChartImages() ([]string, error) {
 	return containerImages, nil
 }
 
-func (r *Registry) getChartContainerImages(chart *image.HelmChart, chartPath, valuesPath, kubeVersion string) ([]string, error) {
+func (r *Registry) getChartContainerImages(chart *context.HelmChart, chartPath, valuesPath, kubeVersion string) ([]string, error) {
 	chartResources, err := r.helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace, chart.APIVersions)
 	if err != nil {
 		return nil, fmt.Errorf("templating chart: %w", err)

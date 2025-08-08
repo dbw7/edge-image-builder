@@ -13,7 +13,7 @@ import (
 
 func TestConfigureCustomFiles(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	scriptsDir := filepath.Join(ctx.ImageConfigDir, customDir, customScriptsDir)
@@ -91,7 +91,7 @@ func TestConfigureCustomFiles(t *testing.T) {
 
 func TestConfigureFiles_NoCustomDir(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	// Test
@@ -104,7 +104,7 @@ func TestConfigureFiles_NoCustomDir(t *testing.T) {
 
 func TestCopyCustomFiles_MissingFromDir(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	// Test
@@ -116,7 +116,7 @@ func TestCopyCustomFiles_MissingFromDir(t *testing.T) {
 
 func TestCopyCustomFiles_EmptyFromDir(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	// - from directory to look in

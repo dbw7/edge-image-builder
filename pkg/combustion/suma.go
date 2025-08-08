@@ -3,11 +3,11 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
@@ -20,8 +20,8 @@ const (
 //go:embed templates/30-suma-register.sh.tpl
 var sumaScript string
 
-func configureSuma(ctx *image.Context) ([]string, error) {
-	suma := ctx.ImageDefinition.OperatingSystem.Suma
+func configureSuma(ctx *context.Context) ([]string, error) {
+	suma := ctx.Definition.GetOperatingSystem().GetSuma()
 	if suma.Host == "" {
 		log.AuditComponentSkipped(sumaComponentName)
 		return nil, nil
@@ -36,10 +36,10 @@ func configureSuma(ctx *image.Context) ([]string, error) {
 	return []string{sumaScriptName}, nil
 }
 
-func writeSumaCombustionScript(ctx *image.Context) error {
+func writeSumaCombustionScript(ctx *context.Context) error {
 	sumaScriptFilename := filepath.Join(ctx.CombustionDir, sumaScriptName)
 
-	data, err := template.Parse(sumaScriptName, sumaScript, ctx.ImageDefinition.OperatingSystem.Suma)
+	data, err := template.Parse(sumaScriptName, sumaScript, ctx.Definition.GetOperatingSystem().GetSuma())
 	if err != nil {
 		return fmt.Errorf("applying template to %s: %w", sumaScriptName, err)
 	}

@@ -11,7 +11,7 @@ import (
 
 func TestConfigureMessage(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
+	ctx, _, teardown := setupContext(t)
 	defer teardown()
 
 	// Test
